@@ -1,3 +1,4 @@
+/***agile.vm.browser@v1.0.0 beta***/
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};

@@ -1,4 +1,5 @@
-/******/ (function(modules) { // webpackBootstrap
+/***agile.vm.sprite@v1.0.0 beta***/
+var module$this = module;/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 
