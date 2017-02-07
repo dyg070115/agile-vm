@@ -1,5 +1,9 @@
-/***agile.vm.browser@v1.0.0 beta***/
-/******/ (function(modules) { // webpackBootstrap
+/*
+ *	Agile VM 移动前端MVVM框架
+ *	Version	:	1.0.0 beta
+ *	Author	:	nandy007
+ *	License MIT @ https://github.com/nandy007/agile-vm
+ *//******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 
