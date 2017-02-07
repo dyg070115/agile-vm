@@ -236,7 +236,22 @@
 			},
 			error : function () {
 				_cons('error', arguments);
-			}	
+			},
+			paramTransForm : function(param){
+				if(this.isObject(param)){//如果param是Object则转为键值对参数
+					var rs = [];
+					this.each(param, function(k, v){
+						rs.push(k+'='+v);
+					});
+					return rs.join('&');
+				}else{//如果参数是键值对则转为Object
+					var reg = /([^&=]+)=([\w\W]*?)(&|$|#)/g, rs = {}, result;
+					while ((result = reg.exec(param)) != null) {
+						rs[result[1]] = result[2];
+					}
+					return rs;
+				}
+			}
 		};
 		
 		//继承JQLite的特殊类，用于文档碎片的存储
