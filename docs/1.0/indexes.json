@@ -1,0 +1,30 @@
+{
+    "contains": [
+        {
+            "group": "入门基础",
+            "contains": [
+                {
+                    "subject": "下载和使用",
+                    "mdlink": "getting-started"
+                },
+                {
+                    "subject": "编写Hello World",
+                    "mdlink": "tutorial"
+                }
+            ]
+        },
+        {
+            "group": "API",
+            "contains": [
+                {
+                    "subject": "基础",
+                    "mdlink": "api-base"
+                },
+                {
+                    "subject": "扩展",
+                    "mdlink": "api-extend"
+                }
+            ]
+        }
+    ]
+}
