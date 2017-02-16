@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0 beta
+ *	Version	:	1.0.1487208049743 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -700,8 +700,10 @@
 				var array = Parser.getListScope(scope, $access);
 
 				var forsCache = {};
-
-				var $listFragment = parser.preCompileVFor($node, array, 0, fors, alias, access, forsCache, vforIndex);
+	 
+				var $listFragment = parser.preCompileVFor($node, function(){
+					return Parser.getListScope(scope, $access);
+				}, 0, fors, alias, access, forsCache, vforIndex);
 
 				var isAdapter = $.ui.isJQAdapter($listFragment);
 
@@ -711,9 +713,7 @@
 					$listFragment.replaceTo($node);
 				}
 
-				var deps = [$access];
-
-				var updater = this.updater;
+				var deps = [$access], updater = this.updater;
 
 				this.watcher.watch(deps, function (options, i) {
 
@@ -737,7 +737,9 @@
 
 					updater.updateList($parent, options, function (arr) {
 						var baseIndex = Parser.getBaseIndex(options);
-						var $listFragment = parser.preCompileVFor($node, arr, baseIndex, fors, alias, access, forsCache, vforIndex);
+						var $listFragment = parser.preCompileVFor($node, function(){
+							return arr;
+						}, baseIndex, fors, alias, access, forsCache, vforIndex);
 						return $listFragment;
 					});
 				});
@@ -1189,7 +1191,7 @@
 		 * vfor预编译处理
 		 * 
 		 * @param   {JQLite}     $node         [指令节点]
-		 * @param   {Array}      array         [循环数组数据]
+		 * @param   {Function}   getter          [循环数组数据获取函数]
 		 * @param   {Number}     baseIndex     [起始索引]
 		 * @param   {Object}     fors          [for别名映射]
 		 * @param   {String}     alias         [for指令别名]
@@ -1198,7 +1200,7 @@
 		 * @param   {Number}     vforIndex     [for索引]
 		 * 
 		 */
-		pp.preCompileVFor = function ($node, array, baseIndex, fors, alias, access, forsCache, vforIndex) {
+		pp.preCompileVFor = function ($node, getter, baseIndex, fors, alias, access, forsCache, vforIndex) {
 
 			var parser = this, vm = this.vm;
 
@@ -1210,7 +1212,7 @@
 				//编译每一个cell，直到编译结束初始化adapter事件监听
 				if (!$adapter.setCell($node)) return $adapter;
 				//初始化adpater事件监听
-				$adapter.initEvent($parent, $node, array, function ($plate, position, newArr) {
+				$adapter.initEvent($parent, $node, getter, function ($plate, position, newArr) {
 					parser.buildAdapterList($plate, newArr, position, fors, alias, access, forsCache, vforIndex);
 				});
 				//刷新适配器
@@ -1219,7 +1221,7 @@
 				return $adapter;
 			}
 
-			return parser.buildList($node, array, baseIndex, fors, alias, access, forsCache, vforIndex);
+			return parser.buildList($node, getter(), baseIndex, fors, alias, access, forsCache, vforIndex);
 		};
 
 		/**
@@ -1318,7 +1320,7 @@
 		Parser.isConst = function (str) {
 			str = $.util.trim(str);
 			strs = str.split('');
-			var start = strs.shift(), end = strs.pop();
+			var start = strs.shift()||'', end = strs.pop()||'';
 			str = (start === '(' ? '' : start) + strs.join('') + (end === ')' ? '' : end);
 			if (this.isBool(str) || this.isNum(str)) return true;
 			var CONST_RE = /('[^']*'|"[^"]*")/;
@@ -2456,7 +2458,7 @@
 	*	Template JS模板引擎
 	*	Version	:	1.0.0 beta
 	*	Author	:	nandy007
-	*   License MIT @ https://github.com/nandy007/template
+	*   License MIT @ https://github.com/nandy007/agile-template
 	*/
 	(function(){
 

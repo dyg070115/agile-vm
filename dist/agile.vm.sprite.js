@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0 beta
+ *	Version	:	1.0.1487208055754 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -250,6 +250,12 @@
 							this.setAdapter(val instanceof JQLite?val[0]:val);
 						}else if(name==='checked'||name==='selected'){
 							this.setAttr(name, val===true||val==='true'?'true':'false');
+						}else if(name==='isFocus'){
+							if(val){
+								this.setFocus();
+							}else{
+								window.hideSip();
+							}
 						}else if(typeof this[name]==='function'){
 							this[name](val);
 						}else{
@@ -274,6 +280,8 @@
 							ret = new JQAdapter(adapter);
 						}else if(name==='checked'||name==='selected'){
 							ret = el.getAttr(name)==='true'?true:false;
+						}else if(typeof el[name]==='function'){
+							ret = el[name]();
 						}else{
 							ret = el.getAttr(name);
 						}
@@ -302,37 +310,36 @@
 			},
 			addClass : function(className){
 				this.each(function(){
-					var $this = new JQLite(this);
-					var classStr = $this.attr('class');
+					var classStr = (this.getClassStyle()||'').trim();
 					if(!classStr){
-						$this.attr('class', className);
-						return;
+						this.setClassStyle(className);
 					}
-					var cns = [];
-					jqlite.each((className||'').split(' '), function(i, cn){
-						if((' ' + classStr + ' ').indexOf(' ' + cn + ' ') < 0){
+
+					var cns = [], classStr = ' '+classStr+' ';
+
+					jqlite.util.each((className||'').split(' '), function(i, cn){
+						if((classStr).indexOf(' ' + cn + ' ') < 0){
 							cns.push(cn);
 						}
 					});
-					if(cns.length > 0) $this.attr('class', classStr+' '+cns.join(' '));
+
+					if(cns.length > 0) this.setClassStyle(classStr.trim()+' '+cns.join(' '));
 				});
 				return this;
 			},
 			removeClass : function(className){
 				this.each(function(){
-					var $this = new JQLite(this);
-					var classStr = $this.attr('class');
-					if(!classStr){
-						return;
-					}
+					var classStr = (this.getClassStyle()||'').trim();
+					if(!classStr) return;
 					classStr = ' '+classStr+' ';
-					jqlite.each((className||'').split(' '), function(i, cn){
-						cn = ' ' + cn + ' ';
-						if((classStr).indexOf(cn) > -1){
-							className.split(cn).join(' ');
+					jqlite.util.each((className||'').split(' '), function(i, cn){
+						cn = ' '+cn+' ';
+						if(classStr.indexOf(cn)>-1){
+							
+							classStr = classStr.split(cn).join(' ');
 						}
 					});
-					$this.attr('class', classStr.split(' ').join(' '));
+					this.setClassStyle(classStr);
 				});
 				return this;
 			},
@@ -1151,43 +1158,45 @@
 
 			return index===0;
 		};
-		ao.initEvent = function($parent, $el, array, callback){
+		ao.initEvent = function($parent, $el, getter, callback){
 
 			var cells = {};
 
 			var useSection = $parent.hasAttr('use-section');
 	 
 			jqlite.each($parent.children('cell'), function(i, cell){
-				var $cell = $(cell).clone(true);
+				var $cell = jqlite(cell).clone(true);
 				cells[$cell.attr('id')] = $cell;
 			});
 
-			var cellType = 'type', sectionTitle = 'title';
+			var cellType = 'type', sectionTitle = 'title', array;
+			
 			var getCells = function(sectionindex){
+				array = getter();
 				return (useSection?array[sectionindex]['cells']:array)||[];
 			};
 
-			this.on("getCellId", function(e, position, sectionindex) {
+			this.off("getCellId").on("getCellId", function(e, position, sectionindex) {	
 	            return getCells(sectionindex)[position][cellType];
 	        });
 	           
-	        this.on("getView", function(e, position, sectionindex) {
+	        this.off("getView").on("getView", function(e, position, sectionindex) {
 	           	var $copy = cells[getCells(sectionindex)[position][cellType]];
 	            jqlite.ui.copyElement(e.target, $copy, true);
-				var $plate = $(e.target);
+				var $plate = jqlite(e.target);
 				callback.apply(null, [$plate, position, useSection?array[sectionindex]['cells']:array]);
 	        });
-	        this.on("getCount", function(e, sectionindex) {
+	        this.off("getCount").on("getCount", function(e, sectionindex) {
 	            return getCells(sectionindex).length;
 	        });
-	        this.on("getItem", function(e, position, sectionindex) {
+	        this.off("getItem").on("getItem", function(e, position, sectionindex) {
 	            return getCells(sectionindex)[position];
 	        });
 
-	        this.on("getSectionCount", function(e) {
+	        this.off("getSectionCount").on("getSectionCount", function(e) {
 	            return useSection?array.length:1;
 	        });
-	        this.on("getSectionText", function(e, sectionindex) {
+	        this.off("getSectionText").on("getSectionText", function(e, sectionindex) {
 	            return useSection?array[sectionindex][sectionTitle]:null;
 	        });
 		};
@@ -1298,7 +1307,7 @@
 				window[params.content?'openData':'open'](params);
 			},
 			refreshDom : function(dom){
-				$(dom||document).exe('refresh', []);
+				jqlite(dom||document).exe('refresh', []);
 			},
 			toast : function(content, duration){
 				ui.toast({
@@ -1861,8 +1870,10 @@
 				var array = Parser.getListScope(scope, $access);
 
 				var forsCache = {};
-
-				var $listFragment = parser.preCompileVFor($node, array, 0, fors, alias, access, forsCache, vforIndex);
+	 
+				var $listFragment = parser.preCompileVFor($node, function(){
+					return Parser.getListScope(scope, $access);
+				}, 0, fors, alias, access, forsCache, vforIndex);
 
 				var isAdapter = $.ui.isJQAdapter($listFragment);
 
@@ -1872,9 +1883,7 @@
 					$listFragment.replaceTo($node);
 				}
 
-				var deps = [$access];
-
-				var updater = this.updater;
+				var deps = [$access], updater = this.updater;
 
 				this.watcher.watch(deps, function (options, i) {
 
@@ -1898,7 +1907,9 @@
 
 					updater.updateList($parent, options, function (arr) {
 						var baseIndex = Parser.getBaseIndex(options);
-						var $listFragment = parser.preCompileVFor($node, arr, baseIndex, fors, alias, access, forsCache, vforIndex);
+						var $listFragment = parser.preCompileVFor($node, function(){
+							return arr;
+						}, baseIndex, fors, alias, access, forsCache, vforIndex);
 						return $listFragment;
 					});
 				});
@@ -2350,7 +2361,7 @@
 		 * vfor预编译处理
 		 * 
 		 * @param   {JQLite}     $node         [指令节点]
-		 * @param   {Array}      array         [循环数组数据]
+		 * @param   {Function}   getter          [循环数组数据获取函数]
 		 * @param   {Number}     baseIndex     [起始索引]
 		 * @param   {Object}     fors          [for别名映射]
 		 * @param   {String}     alias         [for指令别名]
@@ -2359,7 +2370,7 @@
 		 * @param   {Number}     vforIndex     [for索引]
 		 * 
 		 */
-		pp.preCompileVFor = function ($node, array, baseIndex, fors, alias, access, forsCache, vforIndex) {
+		pp.preCompileVFor = function ($node, getter, baseIndex, fors, alias, access, forsCache, vforIndex) {
 
 			var parser = this, vm = this.vm;
 
@@ -2371,7 +2382,7 @@
 				//编译每一个cell，直到编译结束初始化adapter事件监听
 				if (!$adapter.setCell($node)) return $adapter;
 				//初始化adpater事件监听
-				$adapter.initEvent($parent, $node, array, function ($plate, position, newArr) {
+				$adapter.initEvent($parent, $node, getter, function ($plate, position, newArr) {
 					parser.buildAdapterList($plate, newArr, position, fors, alias, access, forsCache, vforIndex);
 				});
 				//刷新适配器
@@ -2380,7 +2391,7 @@
 				return $adapter;
 			}
 
-			return parser.buildList($node, array, baseIndex, fors, alias, access, forsCache, vforIndex);
+			return parser.buildList($node, getter(), baseIndex, fors, alias, access, forsCache, vforIndex);
 		};
 
 		/**
@@ -2479,7 +2490,7 @@
 		Parser.isConst = function (str) {
 			str = $.util.trim(str);
 			strs = str.split('');
-			var start = strs.shift(), end = strs.pop();
+			var start = strs.shift()||'', end = strs.pop()||'';
 			str = (start === '(' ? '' : start) + strs.join('') + (end === ')' ? '' : end);
 			if (this.isBool(str) || this.isNum(str)) return true;
 			var CONST_RE = /('[^']*'|"[^"]*")/;
@@ -3617,7 +3628,7 @@
 	*	Template JS模板引擎
 	*	Version	:	1.0.0 beta
 	*	Author	:	nandy007
-	*   License MIT @ https://github.com/nandy007/template
+	*   License MIT @ https://github.com/nandy007/agile-template
 	*/
 	(function(){
 
