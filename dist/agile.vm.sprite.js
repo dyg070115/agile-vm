@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1487208055754 beta
+ *	Version	:	1.0.1487679519723 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -60,7 +60,7 @@
 
 		var ui = __webpack_require__(2), document = __webpack_require__(3), window = __webpack_require__(4), Adapter = __webpack_require__(5);
 
-		var JQLite = function(selector){
+		var JQLite = function(selector, scope){
 
 			if(jqlite.ui.isJQS(selector)) return selector;
 
@@ -68,7 +68,7 @@
 				return $(window).on('ready', selector);
 			}
 
-			var els = selector?(selector instanceof Array?selector:(typeof selector==='string'?(selector.indexOf('<')===0?jqlite.parseHTML(selector):jqlite.parseSelector(selector)):[selector])):[];
+			var els = selector?(selector instanceof Array?selector:(typeof selector==='string'?(selector.indexOf('<')===0?jqlite.parseHTML(selector):jqlite.parseSelector(selector, scope)):[selector])):[];
 			
 			var _this = this;
 
@@ -465,8 +465,7 @@
 							parent.insertBefore(child, target);	
 						}else{
 							parent.appendChild(child);	
-						}
-								
+						}	
 					});
 				});
 				return this;
@@ -516,18 +515,13 @@
 				};
 
 				this.each(function(){
-					this.on(evt, function(e){
-						var root = this;
-						var cur = e.target;
-						if(!selector){
-							callback.apply(root, arguments);
-						}else{
-							jqlite.each(jqlite.parseSelector(selector, root), function(i, el){
-								var _this = getEl(cur, el, root);
-								if(_this) callback.apply(_this, arguments);
-							});
-						}
-					});
+					this.on(evt, selector?function(e){
+						var root = this, cur = e.target;
+						jqlite.each(jqlite.parseSelector(selector, root), function(i, el){
+							var _this = getEl(cur, el, root);
+							if(_this) callback.apply(_this, arguments);
+						});
+					}:callback);
 				});
 				return this;
 			},
@@ -540,10 +534,9 @@
 				return this;
 			},
 			off : function(evt, callback){
-				var args = arguments;
-				args[0] = _eventRefer.get(args[0]);
+				evt = _eventRefer.get(evt);
 				this.each(function(){
-					this.off.apply(this, args);
+					this.off.call(this, evt, callback);
 				});
 				return this;
 			},
@@ -551,7 +544,6 @@
 				var ret;
 				this.each(function(){
 					var el = this;
-					if(this.getTag&&this.getTag()==='list') el = this.getAdapter();
 					if(el&&typeof el[funcName]==='function'){
 						ret = el[funcName].apply(el, params);
 					}
@@ -655,8 +647,8 @@
 			input : 'textChanged'
 		};
 
-		var jqlite = function(selector){
-			return new JQLite(selector);
+		var jqlite = function(selector, scope){
+			return new JQLite(selector, scope);
 		};
 
 
@@ -773,15 +765,17 @@
 								.replace(/[ ]*\]/g, ']')//去掉]左侧的空格
 								.replace(/[ ]+/g, ' ');//合并多个空格为一个空格
 			var exeps = selector.split(',');
-
+			var $scope = jqlite(scope||document), scope = [];
+			$scope.each(function(){
+				scope.push(this);
+			});
 			var rs = [];
 			jqlite.util.each(exeps, function(i, exep){
 				exep = jqlite.util.trim(exep);
 				var funcStr = 'return ["'+exep.replace(/([ >~])/g, '","$1","')+'"];';
-				var scopes = jqlite.isArray(scope)?scope:[scope||document], mode = baseMode||'all', group = (new Function(funcStr))();
+				var scopes = scope, mode = baseMode||'all', group = (new Function(funcStr))();
 
 				jqlite.util.each(group, function(j, slts){
-
 					if(slts===' '){
 						mode = 'all';
 					}else if(slts==='>'){
@@ -1070,6 +1064,23 @@
 					}
 					return rs;
 				}
+			},
+			sync : function(){
+				var args = jqlite.util.copyArray(arguments);
+				var cb = args.pop();
+				var len = args.length;
+				var arr = [];
+				jqlite.util.each(args, function(i, func){
+					(function(i, func){
+						func(function(data){
+							arr[i] = data;
+							len--;
+							if(len===0){
+								cb.apply(cb, arr);
+							}
+						});
+					})(i, func);
+				});
 			}
 		};
 
@@ -1275,7 +1286,7 @@
 
 				return $fragment;
 			},
-			clear : function(el){			
+			clear : function(el){	
 				jqlite.each(el.getAttrs(), function(k, v){
 					if(k!=='id') el.removeAttr(k);
 					return null;
@@ -1306,8 +1317,27 @@
 				if(params.content) delete params.url;
 				window[params.content?'openData':'open'](params);
 			},
-			refreshDom : function(dom){
-				jqlite(dom||document).exe('refresh', []);
+			refreshDom : function(){
+				if(arguments.length===0) document.refresh();
+				jqlite.util.each(arguments, function(i, dom){
+					jqlite(dom).each(function(){
+						if(!dom){
+							document.refresh();
+							return;
+						}
+						var tag = this.getTag&&this.getTag();
+						var parent = this.getParent&&this.getParent(), pTag = parent&&parent.getTag();
+						if(tag==='list'){
+							this.getAdapter().refresh();
+						}else if(tag==='header'&&parent&&pTag==='list'){
+							parent.refreshHeader();
+						}else if(tag==='footer'&&parent&&pTag==='list'){
+							parent.refreshFooter();
+						}else{
+							this.refresh();
+						}
+					});
+				});
 			},
 			toast : function(content, duration){
 				ui.toast({
@@ -1352,7 +1382,13 @@
 				var status = json.status, data = json.data;
 				(status>199&&status<300)?(function(){
 					if(options.dataType==='json'){
-						data = JSON.parse(data);
+						try{
+							data = JSON.parse(data);
+						}catch(e){
+							data = null;
+							jqlite.util.warn('请求地址：'+option.url);
+							jqlite.util.warn('数据格式不正确：'+e);
+						}	
 					}
 					options.success&&options.success(data);
 				})():(function(){
@@ -1410,7 +1446,7 @@
 			jqlite.extend(opts, options);
 
 			var params = converstHTTPParams(opts);
-
+	jqlite.util.error(params.option);
 			http[ajax](params.option, params.callFunction, params.requestProgressFunction, params.responseProgressFunction);
 		};
 
@@ -1870,8 +1906,8 @@
 				var array = Parser.getListScope(scope, $access);
 
 				var forsCache = {};
-	 
-				var $listFragment = parser.preCompileVFor($node, function(){
+
+				var $listFragment = parser.preCompileVFor($node, function () {
 					return Parser.getListScope(scope, $access);
 				}, 0, fors, alias, access, forsCache, vforIndex);
 
@@ -1907,7 +1943,7 @@
 
 					updater.updateList($parent, options, function (arr) {
 						var baseIndex = Parser.getBaseIndex(options);
-						var $listFragment = parser.preCompileVFor($node, function(){
+						var $listFragment = parser.preCompileVFor($node, function () {
 							return arr;
 						}, baseIndex, fors, alias, access, forsCache, vforIndex);
 						return $listFragment;
@@ -1922,24 +1958,38 @@
 				$.util.each(evts, function (evt, func) {
 					var $access = Parser.makePath(expression, fors);
 					var funcStr = Parser.makeAliasPath(expression, fors);
-					var argsStr = '$event';
+					var argsStr = '';
 					funcStr = funcStr.replace(/\((.*)\)/, function (s, s1) {
-						var args = s1.split(',');
+						/*var args = s1.split(',');
 						$.util.each(args, function (i, arg) {
 							args[i] = Parser.makeAliasPath($.util.trim(arg), fors);
 						});
-						argsStr = args.join(',');
+						argsStr = args.join(',');*/
+						argsStr = s1;
 						return '';
 					});
 
-					var _proxy = function (e) {
-						var func = (new Function('scope', 'node', '$event', 'return ' + funcStr + '.call(node, ' + argsStr + ');'));
-						func(scope, this, e);
+					var _proxy = function () {
+						var params = $.util.copyArray(arguments);
+						parser.setDeepScope(fors);
+						if (argsStr === '') {
+							var func = (new Function('scope', 'node', 'params', 'return '
+								+ funcStr + '.apply(node, params);'));
+							func(scope, this, params);
+						} else {
+							var func = (new Function('scope', 'node', '$event', 'return '
+								+ funcStr + '.call(node, ' + argsStr + ');'));
+							func(scope, this, params.shift());
+						}
 					};
 
-					if (isOnce) $node.off(evt, _proxy);
+					$node.each(function () {
+						$.util.defRec(this, '_proxy', _proxy);
+					});
 
-					$node.on(evt, _proxy);
+					if (isOnce) $node.off(evt, Parser._proxy);
+
+					$node.on(evt, Parser._proxy);
 				});
 			},
 			'vone': function ($node, fors, expression, dir) {
@@ -2049,12 +2099,16 @@
 
 				var parser = this, updater = this.updater;
 
-				updater.updateMutex($node, parser.getValue(expression, fors));
+				var preCompile = function($fragment){
+					parser.vm.compileSteps($fragment, fors);
+				};
+
+				updater.updateMutex($node, parser.getValue(expression, fors), preCompile);
 
 				var deps = [Parser.makePath(expression, fors)];
 
 				parser.watcher.watch(deps, function (options) {
-					updater.updateMutex($node, parser.getValue(expression, fors));
+					updater.updateMutex($node, parser.getValue(expression, fors), preCompile);
 				}, fors);
 
 			},
@@ -2408,7 +2462,7 @@
 		 * 
 		 */
 		pp.buildAdapterList = function ($node, array, position, fors, alias, access, forsCache, vforIndex) {
-			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, true);
+			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, false);
 			var $plate = $node.data('vforIndex', vforIndex);
 			this.$scope['$alias'][alias] = array[position];
 			this.vm.compileSteps($plate, cFors);
@@ -2446,7 +2500,7 @@
 		 * 深度设置$alias别名映射
 		 * @param   {Object}     fors          [for别名映射]
 		 */
-		pp.setDeepScope = function (fors) {
+		pp.setDeepScope = function (fors, isParent) {
 			if (!fors) return;
 			var scope = this.$scope, str$alias = '$alias';
 			var alias = fors.alias,
@@ -2459,8 +2513,9 @@
 				return '[' + s1 + ']'
 			}) + '[' + $index + '];');
 			scope[str$alias][alias] = func(scope);
-			scope[str$alias]['$index'] = $index;
-			this.setDeepScope(fors.fors);
+			if(!isParent) scope[str$alias]['$index'] = $index;
+			if($.util.isNumber($index)) isParent = true;
+			this.setDeepScope(fors.fors, isParent);
 		};
 
 		//创建scope数据
@@ -2481,6 +2536,11 @@
 			});
 		};
 
+		Parser._proxy = function () {
+			var _proxy = this._proxy;
+			_proxy.apply(this, arguments);
+		};
+
 		//获取指令名v-on:click -> v-on
 		Parser.getDirName = function (dir) {
 			return dir.split(':')[0];
@@ -2490,7 +2550,7 @@
 		Parser.isConst = function (str) {
 			str = $.util.trim(str);
 			strs = str.split('');
-			var start = strs.shift()||'', end = strs.pop()||'';
+			var start = strs.shift() || '', end = strs.pop() || '';
 			str = (start === '(' ? '' : start) + strs.join('') + (end === ')' ? '' : end);
 			if (this.isBool(str) || this.isNum(str)) return true;
 			var CONST_RE = /('[^']*'|"[^"]*")/;
@@ -2565,10 +2625,32 @@
 
 		//获取指令表达式的别名路径
 		Parser.makeAliasPath = function (exp, fors) {
+			//li.pid==item.pid
+			//$index
+			//obj.title
+			//$index>0
+			exp = exp.replace(/([^\w ])[ ]*([\w]+)/g, function(s, s1, s2){
+
+				s = s1+s2;
+
+				if(s1==='.'||s === '$event'||Parser.isConst(s2)){
+					return s;
+				}
+
+				if(s==='$index'){
+					return 'scope.$alias.'+s;
+				}
+				
+				if(Parser.hasAlias(s2, fors)){
+					return s1+'scope.$alias.'+s2;
+				}else{
+					return s1+'scope.'+s2;
+				}
+			});
 			var exps = exp.split('.');
 			exps[0] = exps[0].replace(/[\w\$]+/,
 				function (s) {
-					if (s === '$event') {
+					if (Parser.isConst(s) || s === '$event' || s==='scope') {
 						return s;
 					}
 
@@ -2577,7 +2659,9 @@
 					}
 					return 'scope.' + s;
 				});
-			return exps.join('.');
+			exp = exps.join('.');
+
+			return exp;
 		};
 
 		//表达式中是否包含别名
@@ -2943,7 +3027,11 @@
 		up.updateListPush = function($parent, options, cb){
 			var $fragment = cb(options.args);
 			var $node = getVforLastChild($parent, options['vforIndex']);
-			$fragment.insertAfter($node);
+			if($node&&$node.length>0){
+				$fragment.insertAfter($node);
+			}else{
+				$fragment.appendTo($parent);
+			}
 		};
 
 		up.updateListShift = function($parent, options, cb){
@@ -2954,7 +3042,11 @@
 		up.updateListUnshift = function($parent, options, cb){
 			var $fragment = cb(options.args);
 			var $node = getVforFirstChild($parent, options['vforIndex']);
-			$fragment.insertBefore($node);
+			if($node&&$node.length>0){
+				$fragment.insertBefore($node);
+			}else{
+				$fragment.appendTo($parent);
+			}	
 		};
 
 		up.updateListSplice = function($parent, options, cb){
@@ -3014,15 +3106,16 @@
 		 * 更新互斥节点内容的渲染 realize v-if/v-else
 		 * @param   {JQLite}      $node
 		 * @param   {Boolean}     isRender  [是否渲染]
+		 * @param   {Function}    cb        [继续编译处理]
 		 */
-		up.updateMutex = function ($node, isRender) {
+		up.updateMutex = function ($node, isRender, cb) {
 			var $siblingNode = $node.next();
 			
 			mutexRender.apply(this, arguments);
 
 			// v-else
 			if ($siblingNode.hasAttr('v-else') || $siblingNode.data('__directive') === 'v-else') {
-				mutexRender.apply(this, [$siblingNode, !isRender]);
+				mutexRender.apply(this, [$siblingNode, !isRender, cb]);
 			}
 		};
 
@@ -3031,48 +3124,20 @@
 		/**
 		 * 互斥节点内容渲染
 		 */
-		var mutexRender = function ($node, isRender) {
+		var mutexRender = function ($node, isRender, cb) {
 			var content = $node.data(__RENDER);
 			if (!content) {
 				$node.data(__RENDER, content = $node.html());
 			}
 			$node.empty();
 
-			var vm = this.vm;
 			var $fragment = $.ui.toJQFragment(content);
 
 			// 渲染
 			if (isRender) {
-				vm.compileSteps($fragment);
+				cb($fragment);
 				$fragment.appendTo($node);
 			}
-			// 不渲染的情况需要移除 DOM 注册的引用
-			else {
-				removeDataELS.call(vm, $fragment);
-			}
-		};
-
-		/**
-		 * 移除 vm.$data中的els对象绑定
-		 * @param   {JQLite}      $element
-		 */
-		var removeDataELS = function ($element) {
-			var vm = this, registers = vm.$data.$els;
-
-			$.util.each($element.childs(), function(i, child){
-				var $node = $(child);
-				if (!$node.isElement()) {
-					return true;
-				}
-
-				$.util.each($node.attrs(), function(ii, attr){
-					if (attr.name === 'v-el' && $.util.hasOwn(registers, attr.value)) {
-						registers[attr.value] = null;
-					}
-				});
-
-				removeDataELS.call(vm, $node);
-			});
 		};
 
 		/**
