@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1487683991147 beta
+ *	Version	:	1.0.1487817915189 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -293,7 +293,7 @@
 				}else if (/<[^>]+>/g.test($el)) {
 					var div = document.createElement('div');
 					div.innerHTML = $el;
-					jqlite.util.each(this.copyArray(div.childNodes), function(i, child){
+					jqlite.util.each(jqlite.util.copyArray(div.childNodes), function(i, child){
 						$fragment.append(child);
 						return null;
 					});
@@ -326,6 +326,9 @@
 
 		if(!window.$){
 			window.$ = jqlite;
+		}
+		if(!window.jQuery){
+			window.jQuery = jqlite;
 		}
 
 		var _template = __webpack_require__(10);
@@ -879,7 +882,7 @@
 			'vshow': function ($node, fors, expression) {
 				var parser = this, updater = this.updater;
 
-				var defaultValue = $node.css('display');
+				var defaultValue = $node.css('display')||'';
 
 				updater.updateShowHide($node, defaultValue, parser.getValue(expression, fors));
 
@@ -1887,14 +1890,13 @@
 
 		/**
 		 * 更新节点显隐 realize v-show
-		 * @param   {JQLite}      $node           [节点对象]
+		 * @param   {JQLite}     $node            [节点对象]
 		 * @param   {String}     defaultValue     [默认值]
 		 * @param   {Boolean}    isDisplay        [是否显示]
 		 */
 		up.updateShowHide = function($node, defaultValue, isDisplay){
-			$node.css('display', isDisplay?defaultValue||'block':'none');
+			$node.css('display', isDisplay?defaultValue:'none');
 		};
-		
 
 		/**
 		 * 更新互斥节点内容的渲染 realize v-if/v-else

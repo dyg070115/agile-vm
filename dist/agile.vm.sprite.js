@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1487679519723 beta
+ *	Version	:	1.0.1487817949812 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -2085,7 +2085,7 @@
 			'vshow': function ($node, fors, expression) {
 				var parser = this, updater = this.updater;
 
-				var defaultValue = $node.css('display');
+				var defaultValue = $node.css('display')||'';
 
 				updater.updateShowHide($node, defaultValue, parser.getValue(expression, fors));
 
@@ -3093,14 +3093,13 @@
 
 		/**
 		 * 更新节点显隐 realize v-show
-		 * @param   {JQLite}      $node           [节点对象]
+		 * @param   {JQLite}     $node            [节点对象]
 		 * @param   {String}     defaultValue     [默认值]
 		 * @param   {Boolean}    isDisplay        [是否显示]
 		 */
 		up.updateShowHide = function($node, defaultValue, isDisplay){
-			$node.css('display', isDisplay?defaultValue||'block':'none');
+			$node.css('display', isDisplay?defaultValue:'none');
 		};
-		
 
 		/**
 		 * 更新互斥节点内容的渲染 realize v-if/v-else
