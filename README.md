@@ -37,7 +37,9 @@ lib下的文件需要经过webpack编译得到可分发的版本方能使用。
 
 使用方法为：
 
-> $(selector).render(obj);
+```javascript
+$(selector).render(obj);
+```
 
 
 其中selector为视图层根节点元素的选择器，请确保选择器相对于页面元素为唯一；obj为一个json对象，内部包含要往视图层渲染的数据内容和函数。可通过对obj对象的操作来控制视图层的刷新。
@@ -48,9 +50,10 @@ lib下的文件需要经过webpack编译得到可分发的版本方能使用。
 
 使用方法为：
 
-> var $ = require(path);
-
-> $(selector).render(obj);
+```javascript
+var $ = require(path);
+$(selector).render(obj);
+```
 
 其中path为放置在sprite工程中的agile vm框架的文件地址；obj为一个json对象，用于渲染视图层。path的配置可以符合sprite框架的require规则设置路径映射达到简化调用的效果。
 
@@ -83,7 +86,9 @@ Agile VM框架使用指令系统关联数据与视图。指令的基本写法为
 
 比如：
 
-> <div v-on:click="doSubmit">{{btnName}}</div>
+```html
+<div v-on:click="doSubmit">{{btnName}}</div>
+```
 
 ### 常用指令说明
 
@@ -107,7 +112,11 @@ Agile VM框架使用指令系统关联数据与视图。指令的基本写法为
 
 > v-on:eventName
 
-用于为元素动态绑定事件，比如：<button v-on:click="doSubmit">提交</button>
+用于为元素动态绑定事件，比如：
+
+```html
+<button v-on:click="doSubmit">提交</button>
+```
 
 > v-one:eventName
 
@@ -115,13 +124,30 @@ Agile VM框架使用指令系统关联数据与视图。指令的基本写法为
 
 > v-bind:attributeName
 
-用于动态绑定元素属性，比如：<img v-bind:src="imgSrc"/>
+用于动态绑定元素属性，比如：
+
+```html
+<img v-bind:src="imgSrc"/>
+```
 
 特别的：
 
-如果属性为style，则指令内容可以是一个json数据，该数据的key为任意样式的名称，value值为该样式的合理的输入值，比如：<a v-bind:style="{color:titleColor, 'background-color':titleBg}">agile vm教程</a>。这时候v-bind:style同时可简写为v-style。
+如果属性为style，则指令内容可以是一个json数据，该数据的key为任意样式的名称，value值为该样式的合理的输入值，比如：
 
-如果属性class，则指令内容可以是一个json数据，该数据的key为任意已定义的class样式名，value值为boolean型，为true则元素添加此class样式，否则移除此class样式。比如：<a v-bind:class="{colorRed:isRed, colorBlue:isBlue}">agile vm教程</a>。这时候v-bind:class可简写为v-class。
+```html
+<a v-bind:style="{color:titleColor, 'background-color':titleBg}">agile vm教程</a>
+```
+
+这时候v-bind:style同时可简写为v-style。
+
+
+如果属性class，则指令内容可以是一个json数据，该数据的key为任意已定义的class样式名，value值为boolean型，为true则元素添加此class样式，否则移除此class样式。比如：
+
+```html
+<a v-bind:class="{colorRed:isRed, colorBlue:isBlue}">agile vm教程</a>
+```
+
+这时候v-bind:class可简写为v-class。
 
 > v-show
 
