@@ -157,7 +157,7 @@ Agile VM框架使用指令系统关联数据与视图。指令的基本写法为
 
 > v-show
 
-用于显隐某个元素，其值为boolean值，当为true时元素显示，false时元素隐藏。
+用于显隐某个元素，其指令内容执行结果应为boolean值，当为true时元素显示，false时元素隐藏。
 
 > v-if/v-else
 
