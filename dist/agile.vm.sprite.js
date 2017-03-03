@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1487817949812 beta
+ *	Version	:	1.0.1488527460596 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -1192,9 +1192,11 @@
 	        });
 	           
 	        this.off("getView").on("getView", function(e, position, sectionindex) {
+				array = getter();
 	           	var $copy = cells[getCells(sectionindex)[position][cellType]];
 	            jqlite.ui.copyElement(e.target, $copy, true);
 				var $plate = jqlite(e.target);
+				cons.error(JSON.stringify(useSection?array[sectionindex]['cells']:array))
 				callback.apply(null, [$plate, position, useSection?array[sectionindex]['cells']:array]);
 	        });
 	        this.off("getCount").on("getCount", function(e, sectionindex) {
@@ -1205,9 +1207,11 @@
 	        });
 
 	        this.off("getSectionCount").on("getSectionCount", function(e) {
+				array = getter();
 	            return useSection?array.length:1;
 	        });
 	        this.off("getSectionText").on("getSectionText", function(e, sectionindex) {
+				array = getter();
 	            return useSection?array[sectionindex][sectionTitle]:null;
 	        });
 		};
@@ -1678,9 +1682,6 @@
 			//缓存根节点
 			this.$element = $element;
 
-			//根节点转文档碎片（符合dom元素唯一性原则）
-			this.$fragment = $.ui.toJQFragment($element);
-
 			//数据模型对象
 			this.$data = model;
 
@@ -1699,9 +1700,7 @@
 		//初始化
 		cp.init = function () {
 			//按步骤编译
-			this.compileSteps(this.$fragment);
-			//将片段还原到原始位置
-			this.$fragment.appendTo(this.$element);
+			this.compileSteps(this.$element);
 		};
 
 		/**
@@ -2437,7 +2436,7 @@
 				if (!$adapter.setCell($node)) return $adapter;
 				//初始化adpater事件监听
 				$adapter.initEvent($parent, $node, getter, function ($plate, position, newArr) {
-					parser.buildAdapterList($plate, newArr, position, fors, alias, access, forsCache, vforIndex);
+					parser.buildAdapterList($plate, newArr, position, fors, alias, access, forsCache, vforIndex, true);
 				});
 				//刷新适配器
 				$.ui.refreshDom($adapter);
@@ -2445,7 +2444,7 @@
 				return $adapter;
 			}
 
-			return parser.buildList($node, getter(), baseIndex, fors, alias, access, forsCache, vforIndex);
+			return parser.buildList($node, getter(), baseIndex, fors, alias, access, forsCache, vforIndex, false);
 		};
 
 		/**
@@ -2461,8 +2460,8 @@
 		 * @param   {Number}     vforIndex     [for索引]
 		 * 
 		 */
-		pp.buildAdapterList = function ($node, array, position, fors, alias, access, forsCache, vforIndex) {
-			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, false);
+		pp.buildAdapterList = function ($node, array, position, fors, alias, access, forsCache, vforIndex, ignor) {
+			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, ignor);
 			var $plate = $node.data('vforIndex', vforIndex);
 			this.$scope['$alias'][alias] = array[position];
 			this.vm.compileSteps($plate, cFors);
@@ -2629,11 +2628,11 @@
 			//$index
 			//obj.title
 			//$index>0
-			exp = exp.replace(/([^\w ])[ ]*([\w]+)/g, function(s, s1, s2){
+			exp = exp.replace(/([^\w \.'"\/])[ ]*([\w]+)/g, function(s, s1, s2){
 
 				s = s1+s2;
 
-				if(s1==='.'||s === '$event'||Parser.isConst(s2)){
+				if(s === '$event'||Parser.isConst(s2)){
 					return s;
 				}
 
@@ -2648,7 +2647,7 @@
 				}
 			});
 			var exps = exp.split('.');
-			exps[0] = exps[0].replace(/[\w\$]+/,
+			exps[0] = /^['"\/].*$/.test(exps[0])?exps[0]:exps[0].replace(/[\w\$]+/,
 				function (s) {
 					if (Parser.isConst(s) || s === '$event' || s==='scope') {
 						return s;
