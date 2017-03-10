@@ -64,6 +64,6 @@ var obj = {
 $('#view').render(obj);
 ```
 
-经过上面的步骤我们就完成了基本的avm框架的基本使用，里面用到了<code>v-model</code>指令和<code>v-text</doce>指令
+经过上面的步骤我们就完成了基本的avm框架的基本使用，里面用到了<code>v-model</code>指令和<code>v-text</code>指令
 
 代码的运行效果是当在浏览器内输入任意字符就会在下面显示“hello+输入的字符”的内容。
