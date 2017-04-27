@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1488527452827 beta
+ *	Version	:	1.0.1493253898226 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -428,13 +428,15 @@
 		var Parser = __webpack_require__(6);
 
 		var BRACE2RE = /\{\{([^\}]*)\}\}/;
+		var SPLITRE = /[\:\#\$\*\.]/;
+		var TEMPTEXT = '$$text';
 
 		var compileUtil = {	
 			isDirective : function (directive) {//判断是否是指令
 				return directive.indexOf('v-') === 0;
 			},
 			getDirName : function(dir){//获取指令名，v-bind -> vbind
-				return dir.split(':')[0].replace('-', '');
+				return dir.split(SPLITRE)[0].replace('-', '');
 			},
 			isInPre : function ($node) {//是否需要预编译
 				return $node.isElement()&&($node.hasAttr('v-if') || $node.hasAttr('v-for') || $node.hasAttr('v-pre'));
@@ -455,6 +457,9 @@
 			},
 			isVforDirective : function(dir){//是否为v-for指令
 				return dir === 'v-for';
+			},
+			isVlikeDirective : function(dir){//是否为v-like指令
+				return dir === 'v-like';
 			}
 		};
 
@@ -505,16 +510,16 @@
 		 * 按步骤编译节点
 		 * @param   {JQFragment|JQLite}    $element            [文档碎片/节点]
 		 * @param   {Object}               fors                [for别名映射]
+		 * @param   {Boolean}              isHold              [是否保持指令不删除]
 		 */
-		cp.compileSteps = function($element, fors){
+		cp.compileSteps = function($element, fors, isHold){
 			//指令节点缓存
 			var directiveNodes = [];
 			//第一步：深度遍历并缓存指令节点
 			this.walkElement($element, fors, directiveNodes);
 			//第二步：编译所有指令节点
-			this.compileDirectives(directiveNodes);
+			this.compileDirectives(directiveNodes, isHold);
 		};
-
 		/**
 		 * 深度遍历并缓存指令节点
 		 * @param   {JQFragment|JQLite}    $element            [文档碎片/节点]
@@ -545,43 +550,59 @@
 		/**
 		 * 编译所有指令节点
 		 * @param   {Array}     directiveNodes      [指令节点缓存]
+		 * @param   {Boolean}   isHold              [是否保持指令不删除]
 		 */
-		cp.compileDirectives = function (directiveNodes) {
+		cp.compileDirectives = function (directiveNodes, isHold) {
 			$.util.each(directiveNodes, function(i, info){
-				this.compileDirective(info);
+				this.compileDirective(info, isHold);
 			}, this);
 		};
 
 		/**
 		 * 编译单个指令节点
-		 * @param   {Array}  info   {$node, fors}
+		 * @param   {Array}    info                [{$node, fors}]
+		 * @param   {Boolean}  isHold              [是否保持指令不删除]
 		 */
-		cp.compileDirective = function (info) {
+		cp.compileDirective = function (info, isHold) {
 			var $node = info.el, fors = info.fors;
 
 			if($node.isElement()){
-				var nodeAttrs = $node.attrs();
+				var nodeAttrs = $node.attrs(),
+					priorityDirs = {
+						vfor : null,
+						vlike : null
+					};
 
 				$.util.each(nodeAttrs, function(i, attr){
 					var name = attr.name;
 					if (compileUtil.isDirective(name)) {
 						if (compileUtil.isVforDirective(name)) {
-							nodeAttrs = [attr];//v-for指令节点其他指令延后编译，需要计算节点数和fors
+							priorityDirs.vfor = attr;//v-for指令节点其他指令延后编译
 							return false;
+						}else if(compileUtil.isVlikeDirective(name)){
+							priorityDirs.vlike = attr;//v-like指令节点优先编译
+							return null;
 						}
 					}else{
 						return null;
 					}
 				});
 
+				//对指令优先级进行处理
+				if(priorityDirs.vfor){
+					nodeAttrs = [priorityDirs.vfor];
+				}else if(priorityDirs.vlike){
+					nodeAttrs.unshift(priorityDirs.vlike);
+				}
+
 				//编译节点指令
 				$.util.each(nodeAttrs, function (i, attr) {
-					this.compile($node, attr, fors);
+					this.compile($node, attr, fors, isHold);
 				}, this);
 
 			}else if($node.elementType()==='#text'){
 				//编译文本指令
-				this.compileText($node, fors);
+				this.compileText($node, fors, isHold);
 			}
 
 		};
@@ -591,14 +612,15 @@
 		 * @param   {JQLite}       $node
 		 * @param   {Object}       attr
 		 * @param   {Array}        fors
+		 * @param   {Boolean}      isHold
 		 */
-		cp.compile = function ($node, attr, fors) {
+		cp.compile = function ($node, attr, fors, isHold) {
 			var dir = attr.name;
 			var exp = attr.value;
 			var args = [$node, fors, exp, dir];
 
 			// 移除指令标记
-			$node.removeAttr(dir);
+			if(!isHold) $node.removeAttr(dir);
 
 			//获取对应指令解析器
 			var hander = this.parser[compileUtil.getDirName(dir)];
@@ -614,18 +636,24 @@
 		 * 编译文本节点 {{text}}
 		 * @param   {JQLite}       $node
 		 * @param   {Object}       fors
+		 * @param   {Boolean}      isHold
 		 */
-		cp.compileText = function ($node, fors) {
+		cp.compileText = function ($node, fors, isHold) {
+
 			var text = $node.text().trim().replace(/\n/g, '').replace(/\"/g, '\\"');
 
 			//a{{b}}c -> "a"+b+"c"，其中a和c不能包含英文双引号"，否则会编译报错
 			text = ('"'+text.replace(new RegExp(BRACE2RE.source, 'g'), function(s, s1){
 				return '"+('+s1+')+"';
 			})+'"').replace(/(\+"")|(""\+)/g, '');
+
+			if(isHold){
+				$node.parent().attr('v-text', text);
+			}
+
 			var vtext = this.parser.vtext;
 			vtext.call(vtext, $node, fors, text, 'v-text');
 		};
-
 
 		module.exports = Compiler;
 	})();
@@ -1096,6 +1124,9 @@
 				Parser.bindChangeEvent($node, function () {
 					duplex[field] = $node.val();
 				});
+			},
+			'vfilter' : function ($node, fors, expression) {
+
 			}
 		};
 
@@ -1260,9 +1291,9 @@
 		 */
 		pp.buildAdapterList = function ($node, array, position, fors, alias, access, forsCache, vforIndex, ignor) {
 			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, ignor);
-			var $plate = $node.data('vforIndex', vforIndex);
+			$node.data('vforIndex', vforIndex);
 			this.$scope['$alias'][alias] = array[position];
-			this.vm.compileSteps($plate, cFors);
+			this.vm.compileSteps($node, cFors, true);
 		};
 
 		/**
@@ -1340,7 +1371,7 @@
 
 		//获取指令名v-on:click -> v-on
 		Parser.getDirName = function (dir) {
-			return dir.split(':')[0];
+			return Parser.splitName(dir)[0];
 		};
 
 		//字符串是否是常量表示
@@ -1516,9 +1547,14 @@
 			return $index;
 		};
 
+		Parser.splitName = function(dir){
+			var SPLITRE = /[\:\#\$\*\.]/;
+			return dir.split(SPLITRE);
+		};
+
 		//解析指令的前后缀
 		Parser.parseDir = function (dir, exp) {
-			var dirs = dir.split(':');
+			var dirs = Parser.splitName(dir);
 			var kv = {};
 			if (dirs.length === 1) {
 				kv = JSON.stringify(exp);
@@ -1626,7 +1662,7 @@
 				$.util.each(str.split(/[ ;]/), function (i, name) {
 					name = $.util.trim(name);
 					if (!name) return;
-					var attr = name.split(':');
+					var attr = Parser.splitName(name);
 					if (attr.length > 1) {
 						attrs[attr[0]] = attr[1];
 					} else {
