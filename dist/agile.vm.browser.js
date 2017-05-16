@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1493253898226 beta
+ *	Version	:	1.0.1494921694578 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -570,7 +570,8 @@
 				var nodeAttrs = $node.attrs(),
 					priorityDirs = {
 						vfor : null,
-						vlike : null
+						vlike : null,
+						vfilter : null
 					};
 
 				$.util.each(nodeAttrs, function(i, attr){
@@ -578,6 +579,8 @@
 					if (compileUtil.isDirective(name)) {
 						if (compileUtil.isVforDirective(name)) {
 							priorityDirs.vfor = attr;//v-for指令节点其他指令延后编译
+							var filterAttr = $node.attr('v-filter');
+							if(filterAttr) priorityDirs.vfilter = {name:'v-filter', value:filterAttr};
 							return false;
 						}else if(compileUtil.isVlikeDirective(name)){
 							priorityDirs.vlike = attr;//v-like指令节点优先编译
@@ -591,6 +594,7 @@
 				//对指令优先级进行处理
 				if(priorityDirs.vfor){
 					nodeAttrs = [priorityDirs.vfor];
+					if(priorityDirs.vfilter) nodeAttrs.unshift(priorityDirs.vfilter);
 				}else if(priorityDirs.vlike){
 					nodeAttrs.unshift(priorityDirs.vlike);
 				}
@@ -721,6 +725,8 @@
 
 				var vm = this.vm, scope = this.$scope, $parent = $node.parent();
 
+				var __filter = $node.data('__filter');
+
 				expression = expression.replace(/[ ]+/g, ' ');
 
 				var exps = expression.split(' in '),
@@ -734,7 +740,7 @@
 
 				var $listFragment = parser.preCompileVFor($node, function () {
 					return Parser.getListScope(scope, $access);
-				}, 0, fors, alias, access, forsCache, vforIndex);
+				}, 0, fors, alias, access, forsCache, vforIndex, __filter);
 
 				var isAdapter = $.ui.isJQAdapter($listFragment);
 
@@ -767,10 +773,11 @@
 					}, handlerFlag);
 
 					updater.updateList($parent, options, function (arr) {
+						if(__filter) $node.data('__filter', __filter);
 						var baseIndex = Parser.getBaseIndex(options);
 						var $listFragment = parser.preCompileVFor($node, function () {
 							return arr;
-						}, baseIndex, fors, alias, access, forsCache, vforIndex);
+						}, baseIndex, fors, alias, access, forsCache, vforIndex, __filter);
 						return $listFragment;
 					});
 				});
@@ -1126,7 +1133,7 @@
 				});
 			},
 			'vfilter' : function ($node, fors, expression) {
-
+				$node.data('__filter', expression);
 			}
 		};
 
@@ -1250,10 +1257,11 @@
 		 * @param   {String}     access        [节点路径]
 		 * @param   {Object}     forsCache     [fors数据缓存]
 		 * @param   {Number}     vforIndex     [for索引]
+		 * @param   {filter}     filter        [过滤器]
 		 * 
 		 */
-		pp.preCompileVFor = function ($node, getter, baseIndex, fors, alias, access, forsCache, vforIndex) {
-
+		pp.preCompileVFor = function ($node, getter, baseIndex, fors, alias, access, forsCache, vforIndex, filter) {
+			
 			var parser = this, vm = this.vm;
 
 			var $parent = $node.parent();
@@ -1265,7 +1273,7 @@
 				if (!$adapter.setCell($node)) return $adapter;
 				//初始化adpater事件监听
 				$adapter.initEvent($parent, $node, getter, function ($plate, position, newArr) {
-					parser.buildAdapterList($plate, newArr, position, fors, alias, access, forsCache, vforIndex, true);
+					parser.buildAdapterList($plate, newArr, position, fors, alias, access, forsCache, vforIndex, true, filter);
 				});
 				//刷新适配器
 				$.ui.refreshDom($adapter);
@@ -1273,7 +1281,7 @@
 				return $adapter;
 			}
 
-			return parser.buildList($node, getter(), baseIndex, fors, alias, access, forsCache, vforIndex, false);
+			return parser.buildList($node, getter(), baseIndex, fors, alias, access, forsCache, vforIndex, false, filter);
 		};
 
 		/**
@@ -1287,10 +1295,11 @@
 		 * @param   {String}     access        [节点路径]
 		 * @param   {Object}     forsCache     [fors数据缓存]
 		 * @param   {Number}     vforIndex     [for索引]
-		 * 
+		 * @param   {ignor}      ignor         [是否忽略]
+		 * @param   {filter}     filter        [过滤器]
 		 */
-		pp.buildAdapterList = function ($node, array, position, fors, alias, access, forsCache, vforIndex, ignor) {
-			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, ignor);
+		pp.buildAdapterList = function ($node, array, position, fors, alias, access, forsCache, vforIndex, ignor, filter) {
+			var cFors = forsCache[position] = Parser.createFors(fors, alias, access, position, filter, ignor);
 			$node.data('vforIndex', vforIndex);
 			this.$scope['$alias'][alias] = array[position];
 			this.vm.compileSteps($node, cFors, true);
@@ -1307,14 +1316,15 @@
 		 * @param   {String}     access        [节点路径]
 		 * @param   {Object}     forsCache     [fors数据缓存]
 		 * @param   {Number}     vforIndex     [for索引]
-		 * 
+		 * @param   {ignor}      ignor         [是否忽略]
+		 * @param   {filter}     filter        [过滤器]
 		 */
-		pp.buildList = function ($node, array, baseIndex, fors, alias, access, forsCache, vforIndex) {
+		pp.buildList = function ($node, array, baseIndex, fors, alias, access, forsCache, vforIndex, ignor, filter) {
 			var $listFragment = $.ui.createJQFragment();
 
 			$.util.each(array, function (i, item) {
 				var ni = baseIndex + i;
-				var cFors = forsCache[ni] = Parser.createFors(fors, alias, access, ni);
+				var cFors = forsCache[ni] = Parser.createFors(fors, alias, access, ni, filter);
 				var $plate = $node.clone(true).data('vforIndex', vforIndex);
 				this.setDeepScope(cFors);
 				this.vm.compileSteps($plate, cFors);
@@ -1327,6 +1337,7 @@
 		/**
 		 * 深度设置$alias别名映射
 		 * @param   {Object}     fors          [for别名映射]
+		 * @param   {Object}     isParent      [是否为父节点]
 		 */
 		pp.setDeepScope = function (fors, isParent) {
 			if (!fors) return;
@@ -1342,6 +1353,13 @@
 			}) + '[' + $index + '];');
 			scope[str$alias][alias] = func(scope);
 			if(!isParent) scope[str$alias]['$index'] = $index;
+			if(fors.filter){
+				var filter$access = Parser.makePath(fors.filter, fors);
+				var filter$func = new Function('scope', '$index', 'cur$item', 'var ret =  scope.' + filter$access.replace(/\.(\d+)/g, function (s, s1) {
+				return '[' + s1 + ']'
+			})+'; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
+				filter$func(scope, $index, scope[str$alias][alias]);
+			}
 			if($.util.isNumber($index)) isParent = true;
 			this.setDeepScope(fors.fors, isParent);
 		};
@@ -1514,12 +1532,13 @@
 		};
 
 		//创建fors数据，内容为别名依赖
-		Parser.createFors = function (fors, alias, access, index, ignor) {
+		Parser.createFors = function (fors, alias, access, index, filter, ignor) {
 			return {
 				alias: alias,
 				access: access,
 				fors: fors,
 				$index: index,
+				filter: filter,
 				ignor: ignor
 			}
 		};
@@ -1957,18 +1976,24 @@
 		 * 互斥节点内容渲染
 		 */
 		var mutexRender = function ($node, isRender, cb) {
-			var content = $node.data(__RENDER);
-			if (!content) {
-				$node.data(__RENDER, content = $node.html());
+			var __render = $node.data(__RENDER);
+			if (!__render) {
+				$node.data(__RENDER, __render = {
+													content : $node.html(), 
+													display : $node.css('display')
+												});
 			}
 			$node.empty();
 
-			var $fragment = $.ui.toJQFragment(content);
-
+			var $fragment = $.ui.toJQFragment(__render.content);
+		    
 			// 渲染
 			if (isRender) {
 				cb($fragment);
 				$fragment.appendTo($node);
+				$node.css({display:__render.display});
+			}else{
+				$node.css({display:'none'});
 			}
 		};
 

@@ -17,12 +17,12 @@
             "group": "API",
             "contains": [
                 {
-                    "subject": "基础",
+                    "subject": "说明",
                     "mdlink": "api-base"
                 },
                 {
-                    "subject": "扩展",
-                    "mdlink": "api-extend"
+                    "subject": "JQLite类",
+                    "mdlink": "api-jqlite"
                 }
             ]
         }
