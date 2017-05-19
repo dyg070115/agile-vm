@@ -18,7 +18,7 @@ $('#container').render(json);
 
 ```
 
-前含义就是将json数据与界面中id为container的元素进行双向数据绑定，该元素中需要包含Agile VM的指令，并且指令绑定的数据必须是json对象内的。
+其含义是将json数据与界面中id为container的元素进行双向数据绑定，该元素中需要包含Agile VM的指令，并且指令绑定的数据必须是json对象内的。
 
 MVVM、Compiler和Parser组件用于解析DOM上的指令。
 
