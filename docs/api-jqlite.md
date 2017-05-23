@@ -37,8 +37,11 @@ var $el = $(selector);//通过selector选择器获取一个JQlite对象
 <h2 id="cid_1">基础</h2>
 
 > [isElement(): boolean;](#)
+
 > [elementType(): string;](#)
+
 > [is(status:string): boolean;](#)
+
 
 
 <h2 id="cid_2">元素集</h2>
