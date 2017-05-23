@@ -47,72 +47,124 @@ var $el = $(selector);//通过selector选择器获取一个JQlite对象
 <h2 id="cid_2">元素集</h2>
 
 > [(selector: string, context?: any): IJQLite;](#)
+
 > [add(el:IJQLite): IJQLite;](#)
+
 > [get(index:number): IJQLite;](#)
+
 > [childs(index?:number): IJQLite;](#)
+
 > [parent(): IJQLite;](#)
+
 > [find(selector:string): IJQLite;](#)
+
 > [first(): IJQLite;](#)
+
 > [last(): IJQLite;](#)
+
 > [before($el:IJQLite): IJQLite;](#)
+
 > [after($el:IJQLite): IJQLite;](#)
+
 > [next(selector:string): IJQLite;](#)
+
 > [prev(selector:string): IJQLite;](#)
+
 > [siblings(selector:string): IJQLite;](#)
+
 > [empty(): IJQLite;](#)
+
 > [remove(): IJQLite;](#)
+
 > [append(el: any): IJQLite;](#)
+
 > [replaceWith(el: any): IJQLite;](#)
+
 > [appendTo(el: any): IJQLite;](#)
+
 > [insertAfter(el: any): IJQLite;](#)
+
 > [insertBefore(el: any): IJQLite;](#)
+
 > [replaceTo(el: any): IJQLite;](#)
+
 > [clone(isDeep?:boolean): IJQLite;](#)
 
 
 <h2 id="cid_3">操作</h2>
 
 > [render(data: Object): any;](#)
+
 > [textContent(text?:string): any;](#)
+
 > [attrs(prop?:string, val?:any): any;](#)
+
 > [html(content?:string): any;](#)
+
 > [text(text?:string): any;](#)
+
 > [html(content?:string): any;](#)
+
 > [val(val?:any): any;](#)
+
 > [css(prop:any, val?:any): any;](#)
+
 > [attr(attrName?:string, attrVal?:any): any;](#)
+
 > [prop(attrName?:string, attrVal?:any): any;](#)
+
 > [removeAttr(prop:string): any;](#)
+
 > [hasAttr(prop:string): boolean;](#)
+
 > [hasClass(className:string): boolean;](#)
+
 > [addClass(className:string): IJQLite;](#)
+
 > [removeClass(className:string): IJQLite;](#)
+
 > [data(key:string, val?:any): any;](#)
+
 > [show(): any;](#)
+
 > [hide(): any;](#)
 
 
 <h2 id="cid_4">工具</h2>
 
 > [each(cb:Function): IJQLite;](#)
+
 > [on(evt:string, selector?:string, callback?:Function): IJQLite;](#)
+
 > [trigger(evt:string, params?:any): IJQLite;](#)
+
 > [off(evt:string, callback?:Function): IJQLite;](#)
+
 > [exe(funcName:any, params?:any): any;](#)
+
 > [ready(cb:Function):any;](#)
+
 > [animate(props:any, duration?:number, easing?:string, complete?:Function): any;](#)
 
 
 <h2 id="cid_5">静态</h2>
 
 > [each(obj:Object, callback:Function, context?:Object): void;](#)
+
 > [	type(obj:any): string;](#)
+
 > [	isArray(obj:any): boolean;](#)
+
 > [	isFunction(obj:any): boolean;](#)
+
 > [	isEmptyObject(obj:any): boolean;](#)
+
 > [	isPlainObject(obj:any): boolean;](#)
+
 > [	extend(target:Object, source:Object, isDeep?:boolean): Object;](#)
+
 > [	ajax(settings: any): void;](#)
+
 > [	util:IJQLiteUtil;](#)
 
 
