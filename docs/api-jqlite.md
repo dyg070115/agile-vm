@@ -24,14 +24,18 @@ var $el = $(selector);//通过selector选择器获取一个JQlite对象
 目前支持的选择器为：
 
 > 类型选择器：如button
+
 > ID选择器： 如 #submit
+
 > 类选择器： 如 .login
+
 > 属性选择器[att="val"）：如 [type="text"]
 
 
 支持的关系符为：
 
 > 空格：所有子孙节点
+
 > &gt;：子节点
 
 <h2 id="cid_1">基础</h2>
