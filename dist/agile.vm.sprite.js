@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1495716428003 beta
+ *	Version	:	1.0.1495717258681 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -3206,7 +3206,7 @@
 		 * @param   {Boolean}    isDisplay        [是否显示]
 		 */
 		up.updateShowHide = function($node, defaultValue, isDisplay){
-			$node.css('display', isDisplay?defaultValue:'none');
+			$node.css('display', isDisplay?(defaultValue==='none'?null:defaultValue):'none');
 		};
 
 		/**
@@ -3247,9 +3247,9 @@
 			if (isRender) {
 				cb($fragment);
 				$fragment.appendTo($node);
-				$node.css({display:__render.display});
+				this.updateShowHide($node, __render.display, true);
 			}else{
-				$node.css({display:'none'});
+				this.updateShowHide($node, __render.display, false);
 			}
 		};
 
