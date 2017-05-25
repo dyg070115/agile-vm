@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1495173202745 beta
+ *	Version	:	1.0.1495716436159 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -125,6 +125,16 @@
 			},
 			render : function(data){
 				jqlite.vm(this, data);
+				return this;
+			},
+			def : function(name, val){
+				if(arguments.length===1){
+					return this.domList.length > 0 && this.domList[0][name];
+				}else if(arguments.length===2){
+					this.each(function(){
+						jqlite.util.defRec(this, name, val)
+					});
+				}
 				return this;
 			}
 		});
@@ -455,11 +465,8 @@
 				}
 				return ret;
 			},
-			isVforDirective : function(dir){//是否为v-for指令
-				return dir === 'v-for';
-			},
-			isVlikeDirective : function(dir){//是否为v-like指令
-				return dir === 'v-like';
+			isTheDirective : function(type, dir){//是否为指定指令
+				return dir === type;
 			}
 		};
 
@@ -571,19 +578,23 @@
 					priorityDirs = {
 						vfor : null,
 						vlike : null,
-						vfilter : null
+						vfilter : null,
+						vcontext : null
 					};
 
 				$.util.each(nodeAttrs, function(i, attr){
 					var name = attr.name;
 					if (compileUtil.isDirective(name)) {
-						if (compileUtil.isVforDirective(name)) {
+						if (compileUtil.isTheDirective('v-for', name)) {
 							priorityDirs.vfor = attr;//v-for指令节点其他指令延后编译
 							var filterAttr = $node.attr('v-filter');
 							if(filterAttr) priorityDirs.vfilter = {name:'v-filter', value:filterAttr};
 							return false;
-						}else if(compileUtil.isVlikeDirective(name)){
+						}else if(compileUtil.isTheDirective('v-like', name)){
 							priorityDirs.vlike = attr;//v-like指令节点优先编译
+							return null;
+						}else if(compileUtil.isTheDirective('v-context', name)){
+							priorityDirs.vcontext = attr;//v-like指令节点优先编译
 							return null;
 						}
 					}else{
@@ -595,10 +606,11 @@
 				if(priorityDirs.vfor){
 					nodeAttrs = [priorityDirs.vfor];
 					if(priorityDirs.vfilter) nodeAttrs.unshift(priorityDirs.vfilter);
-				}else if(priorityDirs.vlike){
-					nodeAttrs.unshift(priorityDirs.vlike);
+				}else{
+					if((priorityDirs.vlike)) nodeAttrs.unshift(priorityDirs.vlike);
+					if((priorityDirs.vcontext)) nodeAttrs.unshift(priorityDirs.vcontext);
 				}
-
+				
 				//编译节点指令
 				$.util.each(nodeAttrs, function (i, attr) {
 					this.compile($node, attr, fors, isHold);
@@ -773,7 +785,7 @@
 					}, handlerFlag);
 
 					updater.updateList($parent, options, function (arr) {
-						if(__filter) $node.data('__filter', __filter);
+						if (__filter) $node.data('__filter', __filter);
 						var baseIndex = Parser.getBaseIndex(options);
 						var $listFragment = parser.preCompileVFor($node, function () {
 							return arr;
@@ -816,7 +828,7 @@
 					};
 
 					$node.each(function () {
-						$.util.defRec(this, '_proxy', _proxy);
+						$.util.defRec(this, Parser._getProxy(evt), _proxy);
 					});
 
 					if (isOnce) $node.off(evt, Parser._proxy);
@@ -917,7 +929,7 @@
 			'vshow': function ($node, fors, expression) {
 				var parser = this, updater = this.updater;
 
-				var defaultValue = $node.css('display')||'';
+				var defaultValue = $node.css('display') || '';
 
 				updater.updateShowHide($node, defaultValue, parser.getValue(expression, fors));
 
@@ -931,7 +943,7 @@
 
 				var parser = this, updater = this.updater;
 
-				var preCompile = function($fragment){
+				var preCompile = function ($fragment) {
 					parser.vm.compileSteps($fragment, fors);
 				};
 
@@ -1132,8 +1144,17 @@
 					duplex[field] = $node.val();
 				});
 			},
-			'vfilter' : function ($node, fors, expression) {
+			'vfilter': function ($node, fors, expression) {
 				$node.data('__filter', expression);
+			},
+			'vcontext': function ($node, fors, expression) {
+				var funcStr = Parser.makeAliasPath(expression, fors),
+					func = Parser.makeFunc(funcStr.match(/\([^\)]*\)/) ? funcStr : funcStr + '()'),
+					scope = this.$scope;
+
+				$node.def('__context', function () {
+					return func(scope);
+				});
 			}
 		};
 
@@ -1261,7 +1282,7 @@
 		 * 
 		 */
 		pp.preCompileVFor = function ($node, getter, baseIndex, fors, alias, access, forsCache, vforIndex, filter) {
-			
+
 			var parser = this, vm = this.vm;
 
 			var $parent = $node.parent();
@@ -1352,15 +1373,25 @@
 				return '[' + s1 + ']'
 			}) + '[' + $index + '];');
 			scope[str$alias][alias] = func(scope);
-			if(!isParent) scope[str$alias]['$index'] = $index;
-			if(fors.filter){
+			if (!isParent) scope[str$alias]['$index'] = $index;
+			if (fors.filter && scope[str$alias][alias]['$index'] !== $index) {
 				var filter$access = Parser.makePath(fors.filter, fors);
 				var filter$func = new Function('scope', '$index', 'cur$item', 'var ret =  scope.' + filter$access.replace(/\.(\d+)/g, function (s, s1) {
-				return '[' + s1 + ']'
-			})+'; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
+					return '[' + s1 + ']'
+				}) + '; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
+				
+				$.util.defRec(scope[str$alias][alias], '$index', $index);
+
 				filter$func(scope, $index, scope[str$alias][alias]);
+
+				
+				/*var $filter = $.util.copy(scope[str$alias][alias]);
+				$filter['$index'] = $index;
+				$.util.defRec(scope[str$alias][alias], 'filter', $filter);
+				filter$func(scope, $index, scope[str$alias][alias]['filter']);*/
+
 			}
-			if($.util.isNumber($index)) isParent = true;
+			if ($.util.isNumber($index)) isParent = true;
 			this.setDeepScope(fors.fors, isParent);
 		};
 
@@ -1382,8 +1413,12 @@
 			});
 		};
 
-		Parser._proxy = function () {
-			var _proxy = this._proxy;
+		Parser._getProxy = function (type) {
+			return '_proxy_' + type;
+		};
+
+		Parser._proxy = function (e) {
+			var _proxy = this[Parser._getProxy(e.type)];
 			_proxy.apply(this, arguments);
 		};
 
@@ -1475,28 +1510,28 @@
 			//$index
 			//obj.title
 			//$index>0
-			exp = exp.replace(/([^\w \.'"\/])[ ]*([\w]+)/g, function(s, s1, s2){
+			exp = exp.replace(/([^\w \.'"\/])[ ]*([\w]+)/g, function (s, s1, s2) {
 
-				s = s1+s2;
+				s = s1 + s2;
 
-				if(s === '$event'||Parser.isConst(s2)){
+				if (s === '$event' || Parser.isConst(s2)) {
 					return s;
 				}
 
-				if(s==='$index'){
-					return 'scope.$alias.'+s;
+				if (s === '$index') {
+					return 'scope.$alias.' + s;
 				}
-				
-				if(Parser.hasAlias(s2, fors)){
-					return s1+'scope.$alias.'+s2;
-				}else{
-					return s1+'scope.'+s2;
+
+				if (Parser.hasAlias(s2, fors)) {
+					return s1 + 'scope.$alias.' + s2;
+				} else {
+					return s1 + 'scope.' + s2;
 				}
 			});
 			var exps = exp.split('.');
-			exps[0] = /^['"\/].*$/.test(exps[0])?exps[0]:exps[0].replace(/[\w\$]+/,
+			exps[0] = /^['"\/].*$/.test(exps[0]) ? exps[0] : exps[0].replace(/[\w\$]+/,
 				function (s) {
-					if (Parser.isConst(s) || s === '$event' || s==='scope') {
+					if (Parser.isConst(s) || s === '$event' || s === 'scope') {
 						return s;
 					}
 
@@ -1566,7 +1601,7 @@
 			return $index;
 		};
 
-		Parser.splitName = function(dir){
+		Parser.splitName = function (dir) {
 			var SPLITRE = /[\:\#\$\*\.]/;
 			return dir.split(SPLITRE);
 		};
@@ -2009,27 +2044,6 @@
 				$node.removeAttr(attribute);
 			}else {
 				$node.attr(attribute, value);
-			}
-		};
-
-		/**
-		 * 更新节点的 classname realize v-bind:class
-		 * @param   {JQLite}              $node
-		 * @param   {String|Boolean}      newclass
-		 * @param   {String|Boolean}      oldclass
-		 * @param   {String}              classname
-		 */
-		up.updateClassName = function ($node, newclass, oldclass, classname) {
-			if (classname) {
-				$node[newclass?'addClass':'removeClass'](classname);
-			}else {
-				if (newclass) {
-					$node.addClass(newclass);
-				}
-
-				if (oldclass) {
-					$node.removeClass(oldclass);
-				}
 			}
 		};
 
