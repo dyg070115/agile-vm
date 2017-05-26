@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1495717258681 beta
+ *	Version	:	1.0.1495776619934 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -570,8 +570,8 @@
 				window.on(_eventRefer.ready, func);
 			},
 			render: function (data) {
-				jqlite.vm(this, data);
-				return this;
+				if(this.length!==1) return null;
+				return jqlite.vm(this, data);
 			},
 			show: function (p) {
 				p = _animateDirectionRefer.formateShowHide(p);
@@ -1641,12 +1641,12 @@
 		};
 
 		/**
-		 * 销毁 mvvm 实例
+		 * 获取 mvvm 绑定的数据
 		 */
-		mp.destroy = function () {
-			this.vm = this.backup = this.$data = null;
+		mp.getData = function(){
+			return this.$data;
 		};
-		
+
 		module.exports = MVVM;
 	})();
 
@@ -2210,11 +2210,11 @@
 
 				var duplexField = parser.getDuplexField(access), duplex = duplexField.duplex, field = duplexField.field;;
 
-				updater.updateTextValue($node, parser.getValue(expression, fors));
+				updater.updateValue($node, parser.getValue(expression, fors));
 
 				var deps = [access];
 				parser.watcher.watch(deps, function () {
-					updater.updateTextValue($node, parser.getValue(expression, fors));
+					updater.updateValue($node, parser.getValue(expression, fors));
 				}, fors);
 
 				Parser.bindTextEvent($node, function () {
@@ -2354,7 +2354,7 @@
 
 				var duplexField = parser.getDuplexField(access), duplex = duplexField.duplex, field = duplexField.field;
 
-				duplex[field] = $node.val();
+				updater.updateValue($node, duplex[field]);
 
 				var deps = [access];
 				parser.watcher.watch(deps, function () {
@@ -3303,11 +3303,11 @@
 		};
 
 		/**
-		 * 更新 text 或 textarea 的 value realize v-model
-		 * @param   {JQLite/input|textarea}  $text
+		 * 更新 value realize v-model
+		 * @param   {JQLite}  $text
 		 * @param   {String}        value
 		 */
-		up.updateTextValue = function ($text, value) {
+		up.updateValue = function ($text, value) {
 			if ($text.val() !== value) {
 				$text.val(value);
 			}
