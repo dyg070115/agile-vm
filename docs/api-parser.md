@@ -31,6 +31,8 @@
 > [v-like](#cid_0_11)
 
 
+
+
 <span id="cid_0_0">**v-text="expression"**</span>
 
 用于渲染文本内容，expression为变量表达式，可以支持字符串拼接，比如：
