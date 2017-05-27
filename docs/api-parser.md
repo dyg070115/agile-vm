@@ -30,7 +30,7 @@
 
 > [v-like](#cid_0_11)
 
-
+  
 
 
 <span id="cid_0_0">**v-text="expression"**</span>
