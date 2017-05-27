@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1495776629343 beta
+ *	Version	:	1.0.1495874488186 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -333,6 +333,11 @@
 		jqlite.vm = function(el, data){
 			var MVVM = __webpack_require__(4);
 			return new MVVM(el, data);
+		};
+
+		jqlite.vm.addParser = function (rules) {
+			var Parser = __webpack_require__(6);
+			Parser.add(rules);
 		};
 
 		module.exports = jqlite;

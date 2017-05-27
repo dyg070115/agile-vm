@@ -23,6 +23,10 @@
                 {
                     "subject": "JQLite类",
                     "mdlink": "api-jqlite"
+                },
+                {
+                    "subject": "Parser类",
+                    "mdlink": "api-parser"
                 }
             ]
         }

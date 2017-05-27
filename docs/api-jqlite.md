@@ -7,7 +7,7 @@
 var $ = require('JQLite');
 ```
 
-在html中可以直接通过<code>$</code>来使用JQLite
+在html中可以直接通过<code>$</code>或者<code>JQLite</code>来使用JQLite。
 
 ### 基本用法
 
@@ -40,15 +40,34 @@ var $el = $(selector);//通过selector选择器获取一个JQlite对象
 
 <h2 id="cid_1">基础</h2>
 
-> [isElement(): boolean;](#)
+> [isElement(): boolean;](#cid_1_0)
 
-> [elementType(): string;](#)
+> [elementType(): string;](#cid_1_1)
 
-> [is(status:string): boolean;](#)
+> [is(status:string): boolean;](#cid_1_2)
 
+<span id="cid_1_0">**isElement(): boolean;**</span>
 
+判断JQlite操作的对象是否为元素节点，当有多个节点时返回第一个节点的类型。
+
+比如：
+
+```javascript
+var $el = $('<box></box>');
+$.util.log($el.isElement()); // box是一个元素节点，打印结果为true
+```
+
+<span id="cid_1_1">**elementType(): string;**</span>
+
+返回当前节点的类型，如果为元素节点返回值为元素的标签名；如果为文本节点返回值为#text。
+
+<span id="cid_1_2">**is(status:string): boolean;**</span>
+
+status的值必须以<code>:</code>开头，为<code>:checked</code>或<code>:selected</code>，即判断元素是否被选中，一般用于checkbox、radio或select等表单组件
 
 <h2 id="cid_2">元素集</h2>
+
+本节内容与jQuery用法基本一致，不做赘述。
 
 > [(selector: string, context?: any): IJQLite;](#)
 
@@ -97,7 +116,9 @@ var $el = $(selector);//通过selector选择器获取一个JQlite对象
 
 <h2 id="cid_3">操作</h2>
 
-> [render(data: Object): any;](#)
+本节内容与jQuery用法基本一致，不做赘述。这里仅列出<code>render</code>的用法。
+
+> [render(data: Object): any;](#cid_3_0)
 
 > [textContent(text?:string): any;](#)
 
@@ -132,6 +153,24 @@ var $el = $(selector);//通过selector选择器获取一个JQlite对象
 > [show(): any;](#)
 
 > [hide(): any;](#)
+
+
+<span id="cid_3_0">**render(data: Object): any;**</span>
+
+<code>render</code>方法是绑定mvvm的入口，JQLite内的元素为视图层，render的入参data为数据层，render返回的是一个mvvm类的示例对象。
+
+```javascript
+var obj = {title:'hello world'};
+var vm = $('#view').render(obj); // vm变量类型是一个mvvm类的示例对象
+
+obj.title = 'new title'; // 绑定数据的变化会联动到界面上view元素中
+```
+
+**mvvm类的方法**
+
+> getData(): Object; // 返回绑定的data数据
+
+> reset(): void; //将data的数据还原
 
 
 <h2 id="cid_4">工具</h2>

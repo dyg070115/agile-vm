@@ -2,7 +2,27 @@
 
 Agile VM移动前端框架是一个数据视图双向绑定的框架，帮助开发者将数据层和视图层分离更彻底，是一个可以让业务逻辑和视图高度复用的框架。
 
-框架分为浏览器版和sprite版。浏览器版用于基于浏览器内核的web工程中；sprite版用于基于烽火星空的原生移动应用开发平台sprite，关于sprite的介绍可以访问[https://www.exmobi.cn/](https://www.exmobi.cn/ "https://www.exmobi.cn/")了解。其中，浏览器版内置了jquery，sprite版实现了jquery的一个子集。但是开发中不建议使用类jquery的相关功能，而是使用双向绑定达到数据和界面的解耦。
+Agile VM框架采用类jQuery语法习惯使用MVVM，比如：
+```html
+<!-- 为div设置id属性，作为JS中的唯一选择器 -->
+<div id="view">
+<input type="text" v-model="welcome" prompt="请输入你的名字"/>
+<p>hello {{welcome}}</p>
+</div>
+```
+
+针对上面的元素做MVVM双向绑定：
+```javascript
+//定义渲染数据对象
+var obj = {
+	welcome : 'world'
+};
+
+//为View绑定数据对象
+$('#view').render(obj);
+```
+
+框架分为browser版和sprite版。browser版用于基于浏览器内核的web工程中；sprite版用于基于烽火星空的原生移动应用开发平台sprite，关于sprite的介绍可以访问[https://sprite.exmobi.cn/](https://sprite.exmobi.cn)了解。其中，browser版内置了jquery，sprite版实现了jquery的一个子集。但是开发中不建议使用类jquery的相关功能，而是使用双向绑定达到数据和界面的解耦。
 
 
 <h2 id="cid_0">源码结构</h2>
@@ -83,6 +103,8 @@ $('#content').render(obj);
 <h2 id="cid_2">指令系统</h2>
 
 Agile VM框架使用指令系统关联数据与视图。指令的基本写法为v-指令名[:指令类别]="指令内容"。特别的，可以通过{{指令内容}}代替v-text="指令内容"。
+
+全部指令和用法请参考[https://gitdocument.exmobi.cn/agile-vm/api-parser.html](https://gitdocument.exmobi.cn/agile-vm/api-parser.html)
 
 比如：
 
