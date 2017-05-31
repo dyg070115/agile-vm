@@ -22,6 +22,8 @@ var obj = {
 $('#view').render(obj);
 ```
 
+使用交流如QQ群：498752673
+
 框架分为browser版和sprite版。browser版用于基于浏览器内核的web工程中；sprite版用于基于烽火星空的原生移动应用开发平台sprite，关于sprite的介绍可以访问[https://sprite.exmobi.cn/](https://sprite.exmobi.cn)了解。其中，browser版内置了jquery，sprite版实现了jquery的一个子集。但是开发中不建议使用类jquery的相关功能，而是使用双向绑定达到数据和界面的解耦。
 
 
