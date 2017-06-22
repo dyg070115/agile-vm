@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1498097402746 beta
+ *	Version	:	1.0.1498125811784 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -2090,7 +2090,7 @@ module.exports = require("Document");
 		//将指令规则添加到Parser对象中
 		$.util.each(directiveRules, function (directive, rule) {
 			parser[directive] = function ($node, fors, expression, dir) {
-				if (dir) $node.data('__directive', Parser.getDirName(dir));
+				if (dir) $node.data('__directive_'+directive, dir);
 				parser.setDeepScope(fors);
 				rule.apply(parser, arguments);
 			};
@@ -3251,7 +3251,7 @@ module.exports = require("File");
 		mutexRender.apply(this, arguments);
 
 		// v-else
-		if ($siblingNode.hasAttr('v-else') || $siblingNode.data('__directive') === 'v-else') {
+		if ($siblingNode.hasAttr('v-else') || $siblingNode.data('__directive_velse')) {
 			mutexRender.apply(this, [$siblingNode, !isRender, cb]);
 		}
 	};
