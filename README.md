@@ -43,12 +43,16 @@ docs：此目录为使用手册目录，具体使用请参考文件夹下的read
 
 lib下的文件需要经过webpack编译得到可分发的版本方能使用。
 
-编译命令接受两个参数，--usein和--compress，其中usein参数含义为框架运行的环境，有两个可选参数值，即sprite和browser；compress参数含义为是否压缩，有此参数则压缩，无则不压缩，不需要设置参数值。
+编译命令接受两个参数，--env {{usein}}和--env {{compress}}，其中usein参数含义为框架运行的环境，有两个可选参数值，即sprite(默认)和browser；compress参数含义为是否压缩，有此参数则压缩，无则不压缩(默认)，不需要设置参数值。
 
 比如：  
-> webpack --usein browser --compress
+> webpack
 
-意为：将lib源码打包为一个用于浏览器切代码经过压缩的分发版本文件。这时候会在dist目录下生成一个名为agile.vm.browser.min.js文件
+意为：将lib源码打包为一个用于sprite且不经过压缩的分发版本文件。这时候会在dist目录下生成一个名为agile.vm.sprite.js文件
+
+> webpack --env browser --env compress
+
+意为：将lib源码打包为一个用于浏览器且代码经过压缩的分发版本文件。这时候会在dist目录下生成一个名为agile.vm.browser.min.js文件
 
 
 <h2 id="cid_1">使用方法</h2>
