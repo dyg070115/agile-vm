@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1498125811784 beta
+ *	Version	:	1.0.1498198361098 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -1601,18 +1601,9 @@ module.exports = require("Document");
 
 			var scope = this.$scope;
 
-			var deps = [];
-
-			var exps = expression.split('+');
-
-			$.util.each(exps, function (i, exp) {
-				exp = exp.trim();
-				//常量不作为依赖
-				if (!Parser.isConst(exp)) {
-					deps.push(Parser.makePath(exp, fors));
-					exps[i] = Parser.makeAliasPath(exp, fors);
-				}
-			});
+			var depsalias = Parser.getDepsAlias(expression, fors);
+			var deps = depsalias.deps;
+			var exps = depsalias.exps;
 
 			var func = new Function('scope', 'try{ return ' + exps.join('+') + '; }catch(e){return "";}');
 
@@ -1836,13 +1827,13 @@ module.exports = require("Document");
 
 			updater.updateShowHide($node, defaultValue, parser.getValue(expression, fors));
 
-			var deps = [Parser.makePath(expression, fors)];
+			var deps = Parser.getDepsAlias(expression, fors).deps;
 
 			parser.watcher.watch(deps, function (options) {
 				updater.updateShowHide($node, defaultValue, parser.getValue(expression, fors));
 			}, fors);
 		},
-		'vif': function ($node, fors, expression) {
+		'vif': function ($node, fors, expression, dir) {
 
 			var parser = this, updater = this.updater;
 
@@ -1850,17 +1841,59 @@ module.exports = require("Document");
 				parser.vm.compileSteps($fragment, fors);
 			};
 
-			updater.updateMutex($node, parser.getValue(expression, fors), preCompile);
+			var mutexHandler = function(){
+				if(!nodes){
+					nodes = [$node], $prev = $node.prev(), $next = $node.next();
+					$.util.error('ddd:'+mutexGroup+':'+$prev.def('__mutexgroup'));
+					while($prev.def('__mutexgroup')===mutexGroup){
+						nodes.unshift($prev);
+						$prev = $prev.prev();
+					}
+					while($next.def('__mutexgroup')===mutexGroup){
+						$.util.error(222);
+						nodes.push($next);
+						$next = $next.next();
+					}
+				}
+				var isDoRender = false;
+				$.util.each(nodes, function(i, $el){
+					var curRender = $el.def('__isrender');
+					if(isDoRender){
+						updater.mutexRender($el, false, preCompile);
+					}else{
+						updater.mutexRender($el, isDoRender = curRender, preCompile);
+					}
+				});
+			};
 
-			var deps = [Parser.makePath(expression, fors)];
+			var isRender = dir==='v-else'?true:parser.getValue(expression, fors);
+			var mutexGroup = this.getMutexGroup(dir==='v-if');
+
+			$node.def('__isrender', isRender);
+			$node.def('__mutexgroup', mutexGroup);
+
+			var $siblingNode = $node.next();
+			var nodes;
+
+			if(!$siblingNode.hasAttr('v-else') && !$siblingNode.hasAttr('v-elseif')){	
+				mutexHandler();
+			}
+
+			var deps = Parser.getDepsAlias(expression, fors).deps;
 
 			parser.watcher.watch(deps, function (options) {
-				updater.updateMutex($node, parser.getValue(expression, fors), preCompile);
+				$node.def('__isrender', parser.getValue(expression, fors));
+				mutexHandler();
 			}, fors);
 
 		},
-		'velse': function ($node, fors, expression) {
-			//do nothing
+		'velseif' : function ($node, fors, expression, dir) {
+			var args = $.util.copyArray(arguments);
+			this.vif.apply(this, args);
+		},
+		'velse': function ($node, fors, expression, dir) {
+			var args = $.util.copyArray(arguments);
+			this.vif.apply(this, args);
 		},
 		'vlike': function ($node, fors, expression) {
 			$node.data('__like', expression);
@@ -2072,6 +2105,9 @@ module.exports = require("Document");
 		//初始化for循环索引
 		this.vforIndex = 0;
 
+		//if else组
+		this.mutexGroup = 0;
+
 		//获取原始scope
 		this.$scope = this.getScope();
 
@@ -2090,12 +2126,28 @@ module.exports = require("Document");
 		//将指令规则添加到Parser对象中
 		$.util.each(directiveRules, function (directive, rule) {
 			parser[directive] = function ($node, fors, expression, dir) {
-				if (dir) $node.data('__directive_'+directive, dir);
+				if (dir) {
+					var __directiveDef = $node.def('__directive');
+					if(!__directiveDef){
+						$node.def('__directive', __directiveDef = {});
+					}
+					__directiveDef[dir] = expression;
+				}
 				parser.setDeepScope(fors);
 				rule.apply(parser, arguments);
 			};
 		});
 	};
+
+	/**
+	 * 获取if else的分组序列
+	 * @param   {Boolean}     isAdd         [是否是新分组]
+	 * @return  {Number}                    [分组序列]
+	 */
+	pp.getMutexGroup = function(isAdd){
+		if(isAdd) this.mutexGroup = this.mutexGroup + 1;
+		return this.mutexGroup;
+	}
 
 	/**
 	 * 通用watch方法
@@ -2372,6 +2424,22 @@ module.exports = require("Document");
 		} else {
 			return "'" + exp + "'";
 		}
+	};
+
+	// 获取依赖
+	Parser.getDepsAlias = function (expression, fors) {
+		var deps = [];
+		var exps = expression.split(/[\+\=\<\>]/g);
+		$.util.each(exps, function (i, exp) {
+			exp = exp.trim();
+			if(!exp) return null;
+			//常量不作为依赖
+			if (!Parser.isConst(exp)) {
+				deps.push(Parser.makePath(exp, fors));
+				exps[i] = Parser.makeAliasPath(exp, fors);
+			}
+		});
+		return {deps:deps, exps:exps};
 	};
 
 	//获取指令表达式的真实路径
@@ -3239,29 +3307,12 @@ module.exports = require("File");
 		$node.css('display', isDisplay?(defaultValue==='none'?null:defaultValue):'none');
 	};
 
-	/**
-	 * 更新互斥节点内容的渲染 realize v-if/v-else
-	 * @param   {JQLite}      $node
-	 * @param   {Boolean}     isRender  [是否渲染]
-	 * @param   {Function}    cb        [继续编译处理]
-	 */
-	up.updateMutex = function ($node, isRender, cb) {
-		var $siblingNode = $node.next();
-		
-		mutexRender.apply(this, arguments);
-
-		// v-else
-		if ($siblingNode.hasAttr('v-else') || $siblingNode.data('__directive_velse')) {
-			mutexRender.apply(this, [$siblingNode, !isRender, cb]);
-		}
-	};
-
 	var __RENDER = '__render';//缓存标记
 
 	/**
 	 * 互斥节点内容渲染
 	 */
-	var mutexRender = function ($node, isRender, cb) {
+	up.mutexRender = function ($node, isRender, cb) {
 		var __render = $node.data(__RENDER);
 		if (!__render) {
 			$node.data(__RENDER, __render = {

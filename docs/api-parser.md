@@ -24,7 +24,7 @@
 
 > [v-show](#cid_0_8)
 
-> [v-if/v-else](#cid_0_9)
+> [v-if/v-elseif/v-else](#cid_0_9)
 
 > [v-model](#cid_0_10)
 
@@ -248,7 +248,7 @@ variable的值会赋值给元素的attributeName属性。并且在variable变化
 
 用于控制组件是否渲染。
 
-当variable为true的时候v-if所在组件的内容渲染，否则内容为空；v-else相反。
+当variable为true的时候v-if/v-elseif所在组件的内容渲染，否则内容为空；v-else相反。
 
 <span id="cid_0_10">**v-model="variable"**</span>
 
