@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1498198336469 beta
+ *	Version	:	1.0.1498209706659 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -1225,7 +1225,7 @@
 	// 获取依赖
 	Parser.getDepsAlias = function (expression, fors) {
 		var deps = [];
-		var exps = expression.split(/[\+\=\<\>]/g);
+		var exps = expression.split(/[\+\<\>]|[\=]{2,3}/g);
 		$.util.each(exps, function (i, exp) {
 			exp = exp.trim();
 			if(!exp) return null;
@@ -1393,7 +1393,8 @@
 	//根据表达式取值
 	Parser.getValue = function (scope, str, fors) {
 		if (arguments.length > 2) {
-			str = this.makeAliasPath(str, fors);
+			var depsalias = Parser.getDepsAlias(str, fors);
+			str = depsalias.exps.join('+');
 		}
 		var func = this.makeFunc(str);
 		return func(scope);
