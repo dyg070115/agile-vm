@@ -244,7 +244,7 @@ variable的值会赋值给元素的attributeName属性。并且在variable变化
 
 当variable变量值为true的时候元素显示，为false则隐藏。
 
-<span id="cid_0_9">**v-if/v-else="variable"**</span>
+<span id="cid_0_9">**v-if/v-elseif/v-else="variable"**</span>
 
 用于控制组件是否渲染。
 
