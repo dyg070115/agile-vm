@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1498198361098 beta
+ *	Version	:	1.0.1498637547774 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -1605,7 +1605,7 @@ module.exports = require("Document");
 			var deps = depsalias.deps;
 			var exps = depsalias.exps;
 
-			var func = new Function('scope', 'try{ return ' + exps.join('+') + '; }catch(e){return "";}');
+			var func = new Function('scope', 'try{ return ' + exps.join('') + '; }catch(e){return "";}');
 
 			var text = func(scope);
 
@@ -1844,13 +1844,11 @@ module.exports = require("Document");
 			var mutexHandler = function(){
 				if(!nodes){
 					nodes = [$node], $prev = $node.prev(), $next = $node.next();
-					$.util.error('ddd:'+mutexGroup+':'+$prev.def('__mutexgroup'));
 					while($prev.def('__mutexgroup')===mutexGroup){
 						nodes.unshift($prev);
 						$prev = $prev.prev();
 					}
 					while($next.def('__mutexgroup')===mutexGroup){
-						$.util.error(222);
 						nodes.push($next);
 						$next = $next.next();
 					}
@@ -2185,7 +2183,7 @@ module.exports = require("Document");
 	pp.getDuplexField = function (access) {
 		var ac = ('scope.' + access).split('.');
 		var field = ac.pop();
-		var duplex = ac.join('.');
+		var duplex = Parser.formateSubscript(ac.join('.'));
 		var scope = this.$scope;
 
 		var func = new Function('scope', 'return ' + duplex + ';');
@@ -2324,16 +2322,12 @@ module.exports = require("Document");
 			$index = fors.$index,
 			ignor = fors.ignor;
 		if (ignor) return this.setDeepScope(fors.fors);
-		var func = new Function('scope', 'return scope.' + $access.replace(/\.(\d+)/g, function (s, s1) {
-			return '[' + s1 + ']'
-		}) + '[' + $index + '];');
+		var func = new Function('scope', 'return scope.' + Parser.formateSubscript($access) + '[' + $index + '];');
 		scope[str$alias][alias] = func(scope);
 		if (!isParent) scope[str$alias]['$index'] = $index;
 		if (fors.filter && scope[str$alias][alias]['$index'] !== $index) {
 			var filter$access = Parser.makePath(fors.filter, fors);
-			var filter$func = new Function('scope', '$index', 'cur$item', 'var ret =  scope.' + filter$access.replace(/\.(\d+)/g, function (s, s1) {
-				return '[' + s1 + ']'
-			}) + '; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
+			var filter$func = new Function('scope', '$index', 'cur$item', 'var ret =  scope.' + Parser.formateSubscript(filter$access) + '; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
 			
 			$.util.defRec(scope[str$alias][alias], '$index', $index);
 
@@ -2382,9 +2376,30 @@ module.exports = require("Document");
 		return Parser.splitName(dir)[0];
 	};
 
+	//是否是运算符
+	Parser.isOperatorCharacter = function(str){
+		var oc = {
+			'<':1,
+			'>':1,
+			'+':1,
+			'==':1,
+			'===':1,
+			'<=':1,
+			'>=':1,
+			'++':1,
+			'-':1,
+			'--':1,
+			'/':1,
+			'%':1,
+			'*':1
+		};
+		return oc[str];
+	};
+
 	//字符串是否是常量表示
 	Parser.isConst = function (str) {
 		str = $.util.trim(str);
+		if(Parser.isOperatorCharacter(str)) return true;
 		strs = str.split('');
 		var start = strs.shift() || '', end = strs.pop() || '';
 		str = (start === '(' ? '' : start) + strs.join('') + (end === ')' ? '' : end);
@@ -2429,10 +2444,18 @@ module.exports = require("Document");
 	// 获取依赖
 	Parser.getDepsAlias = function (expression, fors) {
 		var deps = [];
-		var exps = expression.split(/[\+\=\<\>]/g);
+		var exps = [];
+		expression.replace(/([^\+\-\<\>\=\/\%]*)([\+\<\>\=]|[\=\+\-]{2,3}|\>\=|\<\=)([^\+\-\<\>\=\/\%]*)/g, function(s, s1, s2, s3){
+			s1 = $.util.trim(s1);
+			s3 = $.util.trim(s3);
+			if(s1) exps.push(s1);
+			exps.push(s2);
+			if(s3) exps.push(s3);
+		});
+		if(exps.length===0){
+			exps.push(expression);
+		}
 		$.util.each(exps, function (i, exp) {
-			exp = exp.trim();
-			if(!exp) return null;
 			//常量不作为依赖
 			if (!Parser.isConst(exp)) {
 				deps.push(Parser.makePath(exp, fors));
@@ -2528,11 +2551,7 @@ module.exports = require("Document");
 	//为vfor路径获取scope数据
 	Parser.getListScope = function (obj, path) {
 		var func = new Function(
-			'scope', 'return scope.' +
-			path.replace(/\.(\d+)/g, function (s, s1) {
-				return '[' + s1 + ']';
-			}) +
-			';'
+			'scope', 'return scope.' + Parser.formateSubscript(path) + ';'
 		);
 		return func(obj);
 	};
@@ -2597,7 +2616,8 @@ module.exports = require("Document");
 	//根据表达式取值
 	Parser.getValue = function (scope, str, fors) {
 		if (arguments.length > 2) {
-			str = this.makeAliasPath(str, fors);
+			var depsalias = Parser.getDepsAlias(str, fors);
+			str = depsalias.exps.join('');
 		}
 		var func = this.makeFunc(str);
 		return func(scope);
@@ -2712,6 +2732,13 @@ module.exports = require("Document");
 			if (typeof newObj[k] === 'undefined') diff[k] = null;
 		});
 		return diff;
+	};
+
+	//转换.num为下标[num]
+	Parser.formateSubscript = function(str){
+		return str.replace(/\.(\d+)/, function(s, s1){
+			return '['+s1+']';
+		});
 	};
 
 
