@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1498637426178 beta
+ *	Version	:	1.0.1498889900703 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -287,6 +287,23 @@
 				}
 				return rs;
 			}
+		},
+		sync: function () {
+			var args = jqlite.util.copyArray(arguments);
+			var cb = args.pop();
+			var len = args.length;
+			var arr = [];
+			jqlite.util.each(args, function (i, func) {
+				(function (i, func) {
+					func(function (data) {
+						arr[i] = data;
+						len--;
+						if (len === 0) {
+							cb.apply(cb, arr);
+						}
+					});
+				})(i, func);
+			});
 		}
 	};
 	
@@ -1175,19 +1192,11 @@
 	//是否是运算符
 	Parser.isOperatorCharacter = function(str){
 		var oc = {
-			'<':1,
-			'>':1,
-			'+':1,
-			'==':1,
-			'===':1,
-			'<=':1,
-			'>=':1,
-			'++':1,
-			'-':1,
-			'--':1,
-			'/':1,
-			'%':1,
-			'*':1
+			'+':1, '-':1, '*':1, '/':1, '%':1, // 加减乘除
+
+			'++':1, '--':1, // 加加减减
+
+			'<':1, '>':1, '<=':1, '>=':1, '==':1, '===':1, '!=':1 // 大小比较
 		};
 		return oc[str];
 	};
@@ -1241,12 +1250,15 @@
 	Parser.getDepsAlias = function (expression, fors) {
 		var deps = [];
 		var exps = [];
-		expression.replace(/([^\+\-\<\>\=\/\%]*)([\+\<\>\=]|[\=\+\-]{2,3}|\>\=|\<\=)([^\+\-\<\>\=\/\%]*)/g, function(s, s1, s2, s3){
-			s1 = $.util.trim(s1);
-			s3 = $.util.trim(s3);
-			if(s1) exps.push(s1);
-			exps.push(s2);
-			if(s3) exps.push(s3);
+		// 匹配单引号/双引号包含的常量和+<>==等运算符操作
+		expression.replace(/('[^']*')|("[^"]*")|(([^\+\-\*\/\%\<\>\=\!]*)([\+\-\*\/\%\<\>\=]|[\+\-\=]{2,3}|\>\=|\<\=|\!\=)([^\+\-\*\/\%\<\>\=\!]*))/g, function(s, s1, s2, s3, s4, s5, s6, s7, s8){
+			s1 = $.util.trim(s1||'');if(s1) exps.push(s1);
+
+			s2 = $.util.trim(s2||'');if(s2) exps.push(s2);
+
+			s4 = $.util.trim(s4||'');if(s4) exps.push(s4);
+			s5 = $.util.trim(s5||'');if(s5) exps.push(s5);
+			s6 = $.util.trim(s6||'');if(s6) exps.push(s6);
 		});
 		if(exps.length===0){
 			exps.push(expression);
