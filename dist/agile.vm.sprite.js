@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1499660663821 beta
+ *	Version	:	1.0.1500875610976 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -2590,6 +2590,7 @@ module.exports = require("Document");
 	Parser.getBaseIndex = function (options) {
 		var method = options.method;
 		switch (method) {
+			case 'xPush':
 			case 'push':
 				return options.oldLen;
 			case 'splice':
@@ -3193,6 +3194,7 @@ module.exports = require("File");
 			case 'pop' : 
 				this.updateListPop.apply(this, arguments);
 				break;
+			case 'xPush' : 
 			case 'push' : 
 				this.updateListPush.apply(this, arguments);
 				break;
@@ -3584,6 +3586,7 @@ module.exports = require("File");
 			case 'pop' : 
 				this.updateIndexForPop.apply(this, arguments);
 				break;
+			case 'xPush' : 
 			case 'push' : 
 				this.updateIndexForPush.apply(this, arguments);
 				break;
@@ -3742,6 +3745,14 @@ module.exports = require("File");
 	    }
 	    return this; 
 	};
+	// 重写push算法，使用索引值添加，提高效率
+	Array.prototype.xPush = function(){
+	    var l = this.length;
+		for(var i=0, len = arguments.length ; i<len ; i++){
+			this[l+i] = arguments[i];
+		}
+	    return this; 
+	};
 	
 	// 重写的数组操作方法
 	var rewriteArrayMethods = [
@@ -3752,7 +3763,8 @@ module.exports = require("File");
 		'splice',
 		'unshift',
 		'reverse',
-		'xSort'
+		'xSort',
+		'xPush'
 	];
 
 	var observeUtil  = {
