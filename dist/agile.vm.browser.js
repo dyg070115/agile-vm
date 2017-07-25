@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1500876875069 beta
+ *	Version	:	1.0.1500949773051 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -711,7 +711,6 @@
 		},
 		'vmodel': function ($node, fors, expression) {
 			var type = $node.data('__like') || $node.elementType();
-
 			switch (type) {
 				case 'text':
 				case 'password':
@@ -729,7 +728,7 @@
 			}
 
 		},
-		'vmtext': function ($node, fors, expression) {
+		'vmtext': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);
@@ -747,7 +746,7 @@
 				duplex[field] = $node.val();
 			});
 		},
-		'vmradio': function ($node, fors, expression) {
+		'vmradio': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);
@@ -776,7 +775,7 @@
 				duplex[field] = $node.val();
 			});
 		},
-		'vmcheckbox': function ($node, fors, expression) {
+		'vmcheckbox': function ($node, fors, expression, dir) {
 
 			var parser = this, updater = this.updater;
 
@@ -828,7 +827,7 @@
 				}
 			});
 		},
-		'vmselect': function ($node, fors, expression) {
+		'vmselect': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);
@@ -873,7 +872,7 @@
 				duplex[field] = multi ? selects : selects[0];
 			});
 		},
-		'vmnativeselect': function ($node, fors, expression) {
+		'vmnativeselect': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);

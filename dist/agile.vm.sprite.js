@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1500875610976 beta
+ *	Version	:	1.0.1500949787185 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -1921,7 +1921,6 @@ module.exports = require("Document");
 		},
 		'vmodel': function ($node, fors, expression) {
 			var type = $node.data('__like') || $node.elementType();
-
 			switch (type) {
 				case 'text':
 				case 'password':
@@ -1939,7 +1938,7 @@ module.exports = require("Document");
 			}
 
 		},
-		'vmtext': function ($node, fors, expression) {
+		'vmtext': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);
@@ -1957,7 +1956,7 @@ module.exports = require("Document");
 				duplex[field] = $node.val();
 			});
 		},
-		'vmradio': function ($node, fors, expression) {
+		'vmradio': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);
@@ -1986,7 +1985,7 @@ module.exports = require("Document");
 				duplex[field] = $node.val();
 			});
 		},
-		'vmcheckbox': function ($node, fors, expression) {
+		'vmcheckbox': function ($node, fors, expression, dir) {
 
 			var parser = this, updater = this.updater;
 
@@ -2038,7 +2037,7 @@ module.exports = require("Document");
 				}
 			});
 		},
-		'vmselect': function ($node, fors, expression) {
+		'vmselect': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);
@@ -2083,7 +2082,7 @@ module.exports = require("Document");
 				duplex[field] = multi ? selects : selects[0];
 			});
 		},
-		'vmnativeselect': function ($node, fors, expression) {
+		'vmnativeselect': function ($node, fors, expression, dir) {
 			var parser = this, updater = this.updater;
 
 			var access = Parser.makePath(expression, fors);

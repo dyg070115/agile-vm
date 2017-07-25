@@ -27,6 +27,10 @@
                 {
                     "subject": "Parser类",
                     "mdlink": "api-parser"
+                },
+                {
+                    "subject": "特殊用法",
+                    "mdlink": "special-uses"
                 }
             ]
         }
