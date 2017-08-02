@@ -2,6 +2,14 @@
 
 Agile VM移动前端框架是一个数据视图双向绑定的框架，帮助开发者将数据层和视图层分离更彻底，是一个可以让业务逻辑和视图高度复用的框架。
 
+
+演示示例：[https://gitdocument.exmobi.cn/agile-vm/docs/demo/index.html](https://gitdocument.exmobi.cn/agile-vm/docs/demo/index.html)
+
+示例源码：[https://github.com/nandy007/agile-vm/tree/master/docs/demo](https://github.com/nandy007/agile-vm/tree/master/docs/demo)
+
+注：示例包含Agile Lite + Agile VM框架
+
+
 Agile VM框架采用类jQuery语法习惯使用MVVM，比如：
 ```html
 <!-- 为div设置id属性，作为JS中的唯一选择器 -->
