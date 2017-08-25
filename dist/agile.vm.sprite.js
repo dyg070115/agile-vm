@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1503562216640 beta
+ *	Version	:	1.0.1503655151805 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -3941,7 +3941,6 @@ module.exports = require("File");
 
 		rewriteArrayMethodsCallback(array, this.observeIndex,
 			function (item) {
-				console.log(item);
 				// 重新监测
 				_this.observe(item.newArray, paths);
 
