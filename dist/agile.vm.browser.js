@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1503655236509 beta
+ *	Version	:	1.0.1503975890836 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -1139,7 +1139,7 @@
 		var func = new Function('scope', 'return scope.' + Parser.formateSubscript($access) + '[' + $index + '];');
 		scope[str$alias][alias] = func(scope);
 		if (!isParent) scope[str$alias]['$index'] = $index;
-		if (fors.filter && scope[str$alias][alias]['$index'] !== $index) {
+		if (fors.filter) {
 			var filter$access = Parser.makePath(fors.filter, fors);
 			var filter$func = new Function('scope', '$index', 'cur$item', 'var ret =  scope.' + Parser.formateSubscript(filter$access) + '; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
 			
@@ -1147,6 +1147,7 @@
 
 			filter$func(scope, $index, scope[str$alias][alias]);
 
+			delete fors.filter;
 			
 			/*var $filter = $.util.copy(scope[str$alias][alias]);
 			$filter['$index'] = $index;
