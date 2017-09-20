@@ -27,7 +27,7 @@
 				this.listeners[index] = function () {
 					callback.apply(context || this, arguments);
 				};
-				$node.on(evt, this.listeners[index]);
+				$node.__on__(evt, this.listeners[index]);
 			},
 			remove : function ($node, evt, callback) {
 				var _this = this;

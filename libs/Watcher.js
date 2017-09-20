@@ -221,6 +221,15 @@
 
 	};
 
+	/**
+	 * 销毁
+	 */
+	wp.destroy = function(){
+		this.observer.destroy();
+		this.$depSub = {};
+		this.parser = this.observer = null;
+	}
+
 	
 	module.exports = Watcher;
 })();

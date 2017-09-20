@@ -39,9 +39,9 @@ $('#view').render(obj);
 
 ### 目录说明
 
-源码中包含三个目录：lib、dist和docs。
+源码中包含三个目录：libs、dist和docs。
 
-lib：此目录是源码文件，框架功能的修改可在此文件中完成，文件下的webpack.config.js文件用于使用webpack对lib下的源码进行打包为可分发的资源，分发的资源位于dist目录。
+libs：此目录是源码文件，框架功能的修改可在此文件中完成，执行webpack命令后，分发的资源位于dist目录。
 
 dist：此目录为最终开发者使用的资源文件，其中带有sprite字样的用于sprite平台，带有browser字样的用于浏览器；带有min字样的是压缩版，不带有min字样的是未压缩版本。
 
@@ -49,7 +49,7 @@ docs：此目录为使用手册目录，具体使用请参考文件夹下的read
 
 ### 编译说明
 
-lib下的文件需要经过webpack编译得到可分发的版本方能使用。
+libs下的文件需要经过webpack编译得到可分发的版本方能使用。
 
 编译命令接受两个参数，--env {{usein}}和--env {{compress}}，其中usein参数含义为框架运行的环境，有两个可选参数值，即sprite(默认)和browser；compress参数含义为是否压缩，有此参数则压缩，无则不压缩(默认)，不需要设置参数值。
 
@@ -72,9 +72,24 @@ lib下的文件需要经过webpack编译得到可分发的版本方能使用。
 使用方法为：
 
 ```javascript
-$(selector).render(obj);
+var vm = $(selector).render(obj);
 ```
 
+如需销毁vm调用destroy方法即可：
+
+```javascript
+var vm = $(selector).render(obj);
+vm.destroy();
+```
+
+或者
+
+```javascript
+$(selector).render(obj);
+// 只要注入过一次，调用render空方法可返回vm对象，不会重复渲染
+var vm = $(selector).render();
+vm.destroy();
+```
 
 其中selector为视图层根节点元素的选择器，请确保选择器相对于页面元素为唯一；obj为一个json对象，内部包含要往视图层渲染的数据内容和函数。可通过对obj对象的操作来控制视图层的刷新。
 

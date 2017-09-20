@@ -81,6 +81,25 @@
 				});
 			}
 			return this;
+		},
+		__on__: function (evt, selector, callback) {
+			this.each(function () {
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				if (avmEvents.indexOf(evt) > -1) return;
+				avmEvents.push(evt);
+				$node.attr('avme', '1');
+				jqlite.util.defRec(this, '__avm-events__', avmEvents);
+			});
+			this.on.apply(this, arguments);
+		},
+		__remove_on__: function(){
+			$(this).find('[avme="1"]').each(function(){
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				jqlite.util.defRec(this, '__avm-events__', null);
+				jqlite.util.each(avmEvents, function(i, evt){
+					$node.off(evt);
+				});
+			});
 		}
 	});
 

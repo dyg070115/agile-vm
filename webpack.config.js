@@ -1,5 +1,6 @@
 var webpack = require('webpack'),
-    path = require('path');
+    path = require('path'),
+    packageJSON = require('./package.json');
 //var commonsPlugin = new webpack.optimize.CommonsChunkPlugin('common.js');
 
 var commands = (function(){
@@ -22,7 +23,7 @@ var commands = (function(){
 
 var usein = commands['usein']||'sprite';
 var compress = commands.has('compress');
-var version = commands['version']||'1.0.'+new Date().getTime();
+var version = packageJSON.version+'.'+new Date().getTime();
 var fileName = 'agile.vm.'+usein+(compress?'.min':'');
 
 var copyright = [
@@ -55,7 +56,7 @@ var plugins = (function(){
 
         SpriteModulePlugin.prototype.apply = function(compiler) {
             compiler.plugin('done', function() {
-                var fs = require('fs'), filePath = '../dist/'+fileName+'.js', encoding = 'utf-8';
+                var fs = require('fs'), filePath = './dist/'+fileName+'.js', encoding = 'utf-8';
                 var file = fs.readFileSync(filePath, encoding);
                 var content = [];
                 content.push(copyright);
@@ -81,11 +82,11 @@ module.exports = {
     plugins: plugins,
     //页面入口文件配置
     entry: {
-        index : './src/index.js'
+        index : './libs/index.js'
     },
     //入口文件输出配置
     output: {
-        path: path.join(__dirname, '../dist'),
+        path: path.join(__dirname, './dist'),
         filename: fileName+'.js'
     },
     module: {
@@ -110,17 +111,17 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.json', '.scss'],
         alias: {
-            "JQLite": path.join(__dirname, "./src/JQLite."+usein+".js"),
-            "diff": path.join(__dirname, "./src/diff.js"),
-            "Observer": path.join(__dirname, "./src/Observer.js"),
-            "Updater": path.join(__dirname, "./src/Updater.js"),
-            "Watcher": path.join(__dirname, "./src/Watcher.js"),
-            "Compiler": path.join(__dirname, "./src/Compiler.js"),
-            "rule": path.join(__dirname, "./src/rule.js"),
-            "Parser": path.join(__dirname, "./src/Parser.js"),
-            "MVVM": path.join(__dirname, "./src/MVVM.js"),
-            "template": path.join(__dirname, "./src/template.js"),
-            "jQuery": path.join(__dirname, "./src/jQuery.js") //only browser
+            "JQLite": path.join(__dirname, "./libs/JQLite."+usein+".js"),
+            "diff": path.join(__dirname, "./libs/diff.js"),
+            "Observer": path.join(__dirname, "./libs/Observer.js"),
+            "Updater": path.join(__dirname, "./libs/Updater.js"),
+            "Watcher": path.join(__dirname, "./libs/Watcher.js"),
+            "Compiler": path.join(__dirname, "./libs/Compiler.js"),
+            "rule": path.join(__dirname, "./libs/rule.js"),
+            "Parser": path.join(__dirname, "./libs/Parser.js"),
+            "MVVM": path.join(__dirname, "./libs/MVVM.js"),
+            "template": path.join(__dirname, "./libs/template.js"),
+            "jQuery": path.join(__dirname, "./libs/jQuery.js") //only browser
         }
     }
 };

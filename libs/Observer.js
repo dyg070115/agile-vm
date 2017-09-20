@@ -222,5 +222,10 @@
 			});
 	};
 
+	// 销毁
+	op.destroy = function(){
+		this.$subs = {};
+	};
+
 	module.exports = Observer;
 })();

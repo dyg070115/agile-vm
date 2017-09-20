@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1503975890836 beta
+ *	Version	:	0.1.0.1505913565388 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  *//******/ (function(modules) { // webpackBootstrap
@@ -155,6 +155,25 @@
 				});
 			}
 			return this;
+		},
+		__on__: function (evt, selector, callback) {
+			this.each(function () {
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				if (avmEvents.indexOf(evt) > -1) return;
+				avmEvents.push(evt);
+				$node.attr('avme', '1');
+				jqlite.util.defRec(this, '__avm-events__', avmEvents);
+			});
+			this.on.apply(this, arguments);
+		},
+		__remove_on__: function(){
+			$(this).find('[avme="1"]').each(function(){
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				jqlite.util.defRec(this, '__avm-events__', null);
+				jqlite.util.each(avmEvents, function(i, evt){
+					$node.off(evt);
+				});
+			});
 		}
 	});
 
@@ -489,6 +508,7 @@
 				var handlerFlag = (i === 0);
 				parser.watcher.updateIndex($access, options, function (opts) {
 					var cFor = forsCache[opts.newVal] = forsCache[opts.oldVal];
+					if(__filter) cFor.filter = __filter;
 					cFor['$index'] = opts.newVal;
 					parser.watcher.change(opts);
 				}, handlerFlag);
@@ -542,7 +562,7 @@
 
 				if (isOnce) $node.off(evt, Parser._proxy);
 
-				$node.on(evt, Parser._proxy);
+				$node.__on__(evt, Parser._proxy);
 			});
 		},
 		'vone': function ($node, fors, expression, dir) {
@@ -772,9 +792,7 @@
 			}, fors);
 
 			Parser.bindChangeEvent($node, function () {
-				if (isChecked === $node.is(':checked')) return;
-				isChecked = $node.is(':checked');
-				duplex[field] = $node.val();
+				if($node.is(':checked')) duplex[field] = $node.val();
 			});
 		},
 		'vmcheckbox': function ($node, fors, expression, dir) {
@@ -1165,6 +1183,15 @@
 	};
 
 	/**
+	 * 销毁
+	 */
+	pp.destroy = function($element){
+		$element.__remove_on__();
+		this.watcher.destroy();
+		this.$scope = this.watcher = this.updater = null;
+	}
+
+	/**
 	 * 添加指令规则
 	 * @param   {Object|String}     directive       [当只有一个参数是代表是指令规则键值对，两个参数的时候代表指令名]
 	 * @param   {Function}          func            [指令解析函数]
@@ -1459,27 +1486,27 @@
 
 		// 解决中文输入时 input 事件在未选择词组时的触发问题
 		// https://developer.mozilla.org/zh-CN/docs/Web/Events/compositionstart
-		$node.on('compositionstart', function () {
+		$node.__on__('compositionstart', function () {
 			composeLock = true;
 		});
-		$node.on('compositionend', function () {
+		$node.__on__('compositionend', function () {
 			composeLock = false;
 		});
 
 		// input 事件(实时触发)
-		$node.on('input', function () {
+		$node.__on__('input', function () {
 			callbacl.apply(this, arguments);
 		});
 
 		// change 事件(失去焦点触发)
-		$node.on('blur', function () {
+		$node.__on__('blur', function () {
 			callbacl.apply(this, arguments);
 		});
 	};
 
 	//通用change事件监听处理。比如：radio、checkbox、select等
 	Parser.bindChangeEvent = function ($node, callback) {
-		$node.on('change', function () {
+		$node.__on__('change', function () {
 			callback.apply(this, arguments);
 		});
 	};
@@ -1560,7 +1587,40 @@
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(0);
+(function (factory) {
+    const avm = factory();
+    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
+        module.exports = JQLite;
+    }
+    
+    const modName = window.__AGILE_VM_ID__ || 'avm';
+
+    if (typeof window.define === "function" && window.define.amd) {
+        window.define(modName, [], function () {
+            return avm;
+        });
+    }
+
+    if(!window[modName]) window[modName] = avm;
+
+})(function(){
+    return {
+        JQLite: __webpack_require__(0),
+        $: __webpack_require__(0),
+        Parser: __webpack_require__(1)
+    };
+})
+
+
+	/*window.JQLite = jqlite;
+
+	if(!window.$){
+		window.$ = jqlite;
+	}
+	if(!window.jQuery){
+		window.jQuery = jqlite;
+	}*/
+
 
 /***/ }),
 /* 3 */
@@ -1610,6 +1670,15 @@ module.exports = __webpack_amd_options__;
 	}
 
 	var mp = MVVM.prototype;
+
+
+	/**
+	 * 销毁mvvm对象
+	 */
+	mp.destroy = function(){
+		this.vm.destroy();
+		this.backup = this.vm = this.$data = null;
+	}
 
 
 	/**
@@ -1884,6 +1953,14 @@ module.exports = __webpack_amd_options__;
 		vtext.call(vtext, $node, fors, text, 'v-text');
 	};
 
+	/**
+	 * 销毁
+	 */
+	cp.destroy = function(){
+		this.parser.destroy(this.$element);
+		this.parser = this.$data = null;
+	}
+
 	module.exports = Compiler;
 })();
 
@@ -1920,7 +1997,7 @@ module.exports = __webpack_amd_options__;
 				this.listeners[index] = function () {
 					callback.apply(context || this, arguments);
 				};
-				$node.on(evt, this.listeners[index]);
+				$node.__on__(evt, this.listeners[index]);
 			},
 			remove : function ($node, evt, callback) {
 				var _this = this;
@@ -2494,6 +2571,15 @@ module.exports = __webpack_amd_options__;
 
 	};
 
+	/**
+	 * 销毁
+	 */
+	wp.destroy = function(){
+		this.observer.destroy();
+		this.$depSub = {};
+		this.parser = this.observer = null;
+	}
+
 	
 	module.exports = Watcher;
 })();
@@ -2724,6 +2810,11 @@ module.exports = __webpack_amd_options__;
 				// 触发回调
 				_this.trigger(item);
 			});
+	};
+
+	// 销毁
+	op.destroy = function(){
+		this.$subs = {};
 	};
 
 	module.exports = Observer;

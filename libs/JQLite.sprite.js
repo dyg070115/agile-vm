@@ -3,19 +3,19 @@
 
 	var ui = require('UI'), document = require('Document'), window = require("Window"), Adapter = require("ListAdapter");
 	var _util = {
-		setClass : function(el, className){
+		setClass: function (el, className) {
 			var context, contextFunc = el['__context'];
-			if(contextFunc) context = contextFunc();
+			if (contextFunc) context = contextFunc();
 			el.setClassStyle(className, context);
 		}
 	};
 	var LISTCBS = {
-		getCellId : 1,
-		getView : 1,
-		getCount : 1,
-		getItem : 1,
-		getSectionCount : 1,
-		getSectionText : 1
+		getCellId: 1,
+		getView: 1,
+		getCount: 1,
+		getItem: 1,
+		getSectionCount: 1,
+		getSectionText: 1
 	};
 	var JQLite = function (selector, scope) {
 
@@ -76,7 +76,7 @@
 			return this.length > 0 && this.elementType() !== '#text';
 		},
 		elementType: function () {
-			var el = this.domList[0] || {}, nodeType = el.getTag&&el.getTag();
+			var el = this.domList[0] || {}, nodeType = el.getTag && el.getTag();
 			var type = nodeType;
 			return type;
 		},
@@ -317,11 +317,11 @@
 				}
 			}
 		},
-		def : function(name, val){
-			if(arguments.length===1){
+		def: function (name, val) {
+			if (arguments.length === 1) {
 				return this.domList.length > 0 && this.domList[0][name];
-			}else if(arguments.length===2){
-				this.each(function(){
+			} else if (arguments.length === 2) {
+				this.each(function () {
 					jqlite.util.defRec(this, name, val)
 				});
 			}
@@ -384,7 +384,7 @@
 			} else {
 				this.each(function () {
 					jqlite.each(args, function (i, $child) {
-						$child = typeof $child==='string'?this.find($child):jqlite($child);
+						$child = typeof $child === 'string' ? this.find($child) : jqlite($child);
 						$child.remove();
 					}, this);
 				});
@@ -464,6 +464,25 @@
 		clone: function (deep) {
 			return new JQLite((this.length > 0 && this.domList[0].clone(deep)) || []);
 		},
+		__on__: function (evt, selector, callback) {
+			this.each(function () {
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				if (avmEvents.indexOf(evt) > -1) return;
+				avmEvents.push(evt);
+				$node.attr('avme', '1');
+				jqlite.util.defRec(this, '__avm-events__', avmEvents);
+			});
+			this.on.apply(this, arguments);
+		},
+		__remove_on__: function(){
+			$(this).find('[avme="1"]').each(function(){
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				jqlite.util.defRec(this, '__avm-events__', null);
+				jqlite.util.each(avmEvents, function(i, evt){
+					$node.off(evt);
+				});
+			});
+		},
 		on: function (evt, selector, callback) {
 			evt = _eventRefer.get(evt);
 			if (typeof selector === 'function') {
@@ -481,9 +500,9 @@
 					return getEl(parent, el, root);
 				}
 			};
-			if(LISTCBS[evt]&&this.is('list')){
+			if (LISTCBS[evt] && this.is('list')) {
 				var _this = this;
-				this.attr('event_'+evt, evt).attr('adapter').on(evt, function(e){
+				this.attr('event_' + evt, evt).attr('adapter').on(evt, function (e) {
 					callback.apply(_this[0], arguments);
 				});
 				return this;
@@ -528,9 +547,9 @@
 			window.on(_eventRefer.ready, func);
 		},
 		render: function (data) {
-			if(this.length!==1) return null;
+			if (this.length !== 1) return null;
 			var el = this[0], vm = el.vm;
-			if(!data)  return vm;
+			if (!data) return vm;
 			return el.vm = jqlite.vm(this, data);
 		},
 		show: function (p) {
@@ -1164,19 +1183,19 @@
 		};
 
 		var cbs = {
-			getCellId : $parent.attr('event_getCellId'),
-			getView : $parent.attr('event_getView'),
-			getCount : $parent.attr('event_getCount'),
-			getItem : $parent.attr('event_getItem'),
-			getSectionCount : $parent.attr('event_getSectionCount'),
-			getSectionText : $parent.attr('event_getSectionText')
+			getCellId: $parent.attr('event_getCellId'),
+			getView: $parent.attr('event_getView'),
+			getCount: $parent.attr('event_getCount'),
+			getItem: $parent.attr('event_getItem'),
+			getSectionCount: $parent.attr('event_getSectionCount'),
+			getSectionText: $parent.attr('event_getSectionText')
 		};
 
-		if(!cbs.getCellId) this.off("getCellId").on("getCellId", function (e, position, sectionindex) {
+		if (!cbs.getCellId) this.off("getCellId").on("getCellId", function (e, position, sectionindex) {
 			return getCells(sectionindex)[position][cellType];
 		});
 
-		if(!cbs.getView) this.off("getView").on("getView", function (e, position, sectionindex) {
+		if (!cbs.getView) this.off("getView").on("getView", function (e, position, sectionindex) {
 			array = getter();
 			var $plate = jqlite(e.target);
 			callback.apply(null, [$plate, position, useSection ? array[sectionindex]['cells'] : array]);
@@ -1188,18 +1207,18 @@
 		// 	callback.apply(null, [$temp, position, useSection?array[sectionindex]['cells']:array]);
 		// 	jqlite.ui.copyElement(e.target, $temp, true);
 		// });
-		if(!cbs.getCount) this.off("getCount").on("getCount", function (e, sectionindex) {
+		if (!cbs.getCount) this.off("getCount").on("getCount", function (e, sectionindex) {
 			return getCells(sectionindex).length;
 		});
-		if(!cbs.getItem) this.off("getItem").on("getItem", function (e, position, sectionindex) {
+		if (!cbs.getItem) this.off("getItem").on("getItem", function (e, position, sectionindex) {
 			return getCells(sectionindex)[position];
 		});
 
-		if(!cbs.getSectionCount) this.off("getSectionCount").on("getSectionCount", function (e) {
+		if (!cbs.getSectionCount) this.off("getSectionCount").on("getSectionCount", function (e) {
 			array = getter();
 			return useSection ? array.length : 1;
 		});
-		if(!cbs.getSectionText) this.off("getSectionText").on("getSectionText", function (e, sectionindex) {
+		if (!cbs.getSectionText) this.off("getSectionText").on("getSectionText", function (e, sectionindex) {
 			array = getter();
 			return useSection ? array[sectionindex][sectionTitle] : null;
 		});
@@ -1414,7 +1433,7 @@
 
 		return {
 			option: option,
-			callFunction: 　callFunction,
+			callFunction: callFunction,
 			requestProgressFunction: requestProgressFunction,
 			responseProgressFunction: responseProgressFunction
 		};

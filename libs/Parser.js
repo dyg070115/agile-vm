@@ -91,6 +91,7 @@
 				var handlerFlag = (i === 0);
 				parser.watcher.updateIndex($access, options, function (opts) {
 					var cFor = forsCache[opts.newVal] = forsCache[opts.oldVal];
+					if(__filter) cFor.filter = __filter;
 					cFor['$index'] = opts.newVal;
 					parser.watcher.change(opts);
 				}, handlerFlag);
@@ -144,7 +145,7 @@
 
 				if (isOnce) $node.off(evt, Parser._proxy);
 
-				$node.on(evt, Parser._proxy);
+				$node.__on__(evt, Parser._proxy);
 			});
 		},
 		'vone': function ($node, fors, expression, dir) {
@@ -374,9 +375,7 @@
 			}, fors);
 
 			Parser.bindChangeEvent($node, function () {
-				if (isChecked === $node.is(':checked')) return;
-				isChecked = $node.is(':checked');
-				duplex[field] = $node.val();
+				if($node.is(':checked')) duplex[field] = $node.val();
 			});
 		},
 		'vmcheckbox': function ($node, fors, expression, dir) {
@@ -767,6 +766,15 @@
 	};
 
 	/**
+	 * 销毁
+	 */
+	pp.destroy = function($element){
+		$element.__remove_on__();
+		this.watcher.destroy();
+		this.$scope = this.watcher = this.updater = null;
+	}
+
+	/**
 	 * 添加指令规则
 	 * @param   {Object|String}     directive       [当只有一个参数是代表是指令规则键值对，两个参数的时候代表指令名]
 	 * @param   {Function}          func            [指令解析函数]
@@ -1061,27 +1069,27 @@
 
 		// 解决中文输入时 input 事件在未选择词组时的触发问题
 		// https://developer.mozilla.org/zh-CN/docs/Web/Events/compositionstart
-		$node.on('compositionstart', function () {
+		$node.__on__('compositionstart', function () {
 			composeLock = true;
 		});
-		$node.on('compositionend', function () {
+		$node.__on__('compositionend', function () {
 			composeLock = false;
 		});
 
 		// input 事件(实时触发)
-		$node.on('input', function () {
+		$node.__on__('input', function () {
 			callbacl.apply(this, arguments);
 		});
 
 		// change 事件(失去焦点触发)
-		$node.on('blur', function () {
+		$node.__on__('blur', function () {
 			callbacl.apply(this, arguments);
 		});
 	};
 
 	//通用change事件监听处理。比如：radio、checkbox、select等
 	Parser.bindChangeEvent = function ($node, callback) {
-		$node.on('change', function () {
+		$node.__on__('change', function () {
 			callback.apply(this, arguments);
 		});
 	};

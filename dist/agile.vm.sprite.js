@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1503975859645 beta
+ *	Version	:	0.1.0.1505914009264 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var module$this = module;/******/ (function(modules) { // webpackBootstrap
@@ -75,21 +75,21 @@
 
 (function () {
 
-	var ui = __webpack_require__(4), document = __webpack_require__(1), window = __webpack_require__(5), Adapter = __webpack_require__(6);
+	var ui = __webpack_require__(4), document = __webpack_require__(2), window = __webpack_require__(5), Adapter = __webpack_require__(6);
 	var _util = {
-		setClass : function(el, className){
+		setClass: function (el, className) {
 			var context, contextFunc = el['__context'];
-			if(contextFunc) context = contextFunc();
+			if (contextFunc) context = contextFunc();
 			el.setClassStyle(className, context);
 		}
 	};
 	var LISTCBS = {
-		getCellId : 1,
-		getView : 1,
-		getCount : 1,
-		getItem : 1,
-		getSectionCount : 1,
-		getSectionText : 1
+		getCellId: 1,
+		getView: 1,
+		getCount: 1,
+		getItem: 1,
+		getSectionCount: 1,
+		getSectionText: 1
 	};
 	var JQLite = function (selector, scope) {
 
@@ -150,7 +150,7 @@
 			return this.length > 0 && this.elementType() !== '#text';
 		},
 		elementType: function () {
-			var el = this.domList[0] || {}, nodeType = el.getTag&&el.getTag();
+			var el = this.domList[0] || {}, nodeType = el.getTag && el.getTag();
 			var type = nodeType;
 			return type;
 		},
@@ -391,11 +391,11 @@
 				}
 			}
 		},
-		def : function(name, val){
-			if(arguments.length===1){
+		def: function (name, val) {
+			if (arguments.length === 1) {
 				return this.domList.length > 0 && this.domList[0][name];
-			}else if(arguments.length===2){
-				this.each(function(){
+			} else if (arguments.length === 2) {
+				this.each(function () {
 					jqlite.util.defRec(this, name, val)
 				});
 			}
@@ -458,7 +458,7 @@
 			} else {
 				this.each(function () {
 					jqlite.each(args, function (i, $child) {
-						$child = typeof $child==='string'?this.find($child):jqlite($child);
+						$child = typeof $child === 'string' ? this.find($child) : jqlite($child);
 						$child.remove();
 					}, this);
 				});
@@ -538,6 +538,25 @@
 		clone: function (deep) {
 			return new JQLite((this.length > 0 && this.domList[0].clone(deep)) || []);
 		},
+		__on__: function (evt, selector, callback) {
+			this.each(function () {
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				if (avmEvents.indexOf(evt) > -1) return;
+				avmEvents.push(evt);
+				$node.attr('avme', '1');
+				jqlite.util.defRec(this, '__avm-events__', avmEvents);
+			});
+			this.on.apply(this, arguments);
+		},
+		__remove_on__: function(){
+			$(this).find('[avme="1"]').each(function(){
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				jqlite.util.defRec(this, '__avm-events__', null);
+				jqlite.util.each(avmEvents, function(i, evt){
+					$node.off(evt);
+				});
+			});
+		},
 		on: function (evt, selector, callback) {
 			evt = _eventRefer.get(evt);
 			if (typeof selector === 'function') {
@@ -555,9 +574,9 @@
 					return getEl(parent, el, root);
 				}
 			};
-			if(LISTCBS[evt]&&this.is('list')){
+			if (LISTCBS[evt] && this.is('list')) {
 				var _this = this;
-				this.attr('event_'+evt, evt).attr('adapter').on(evt, function(e){
+				this.attr('event_' + evt, evt).attr('adapter').on(evt, function (e) {
 					callback.apply(_this[0], arguments);
 				});
 				return this;
@@ -602,9 +621,9 @@
 			window.on(_eventRefer.ready, func);
 		},
 		render: function (data) {
-			if(this.length!==1) return null;
+			if (this.length !== 1) return null;
 			var el = this[0], vm = el.vm;
-			if(!data)  return vm;
+			if (!data) return vm;
 			return el.vm = jqlite.vm(this, data);
 		},
 		show: function (p) {
@@ -1238,19 +1257,19 @@
 		};
 
 		var cbs = {
-			getCellId : $parent.attr('event_getCellId'),
-			getView : $parent.attr('event_getView'),
-			getCount : $parent.attr('event_getCount'),
-			getItem : $parent.attr('event_getItem'),
-			getSectionCount : $parent.attr('event_getSectionCount'),
-			getSectionText : $parent.attr('event_getSectionText')
+			getCellId: $parent.attr('event_getCellId'),
+			getView: $parent.attr('event_getView'),
+			getCount: $parent.attr('event_getCount'),
+			getItem: $parent.attr('event_getItem'),
+			getSectionCount: $parent.attr('event_getSectionCount'),
+			getSectionText: $parent.attr('event_getSectionText')
 		};
 
-		if(!cbs.getCellId) this.off("getCellId").on("getCellId", function (e, position, sectionindex) {
+		if (!cbs.getCellId) this.off("getCellId").on("getCellId", function (e, position, sectionindex) {
 			return getCells(sectionindex)[position][cellType];
 		});
 
-		if(!cbs.getView) this.off("getView").on("getView", function (e, position, sectionindex) {
+		if (!cbs.getView) this.off("getView").on("getView", function (e, position, sectionindex) {
 			array = getter();
 			var $plate = jqlite(e.target);
 			callback.apply(null, [$plate, position, useSection ? array[sectionindex]['cells'] : array]);
@@ -1262,18 +1281,18 @@
 		// 	callback.apply(null, [$temp, position, useSection?array[sectionindex]['cells']:array]);
 		// 	jqlite.ui.copyElement(e.target, $temp, true);
 		// });
-		if(!cbs.getCount) this.off("getCount").on("getCount", function (e, sectionindex) {
+		if (!cbs.getCount) this.off("getCount").on("getCount", function (e, sectionindex) {
 			return getCells(sectionindex).length;
 		});
-		if(!cbs.getItem) this.off("getItem").on("getItem", function (e, position, sectionindex) {
+		if (!cbs.getItem) this.off("getItem").on("getItem", function (e, position, sectionindex) {
 			return getCells(sectionindex)[position];
 		});
 
-		if(!cbs.getSectionCount) this.off("getSectionCount").on("getSectionCount", function (e) {
+		if (!cbs.getSectionCount) this.off("getSectionCount").on("getSectionCount", function (e) {
 			array = getter();
 			return useSection ? array.length : 1;
 		});
-		if(!cbs.getSectionText) this.off("getSectionText").on("getSectionText", function (e, sectionindex) {
+		if (!cbs.getSectionText) this.off("getSectionText").on("getSectionText", function (e, sectionindex) {
 			array = getter();
 			return useSection ? array[sectionindex][sectionTitle] : null;
 		});
@@ -1488,7 +1507,7 @@
 
 		return {
 			option: option,
-			callFunction: 　callFunction,
+			callFunction: callFunction,
 			requestProgressFunction: requestProgressFunction,
 			responseProgressFunction: responseProgressFunction
 		};
@@ -1577,7 +1596,7 @@
 	};
 
 	jqlite.vm.addParser = function (rules) {
-		var Parser = __webpack_require__(2);
+		var Parser = __webpack_require__(1);
 		Parser.add(rules);
 	};
 
@@ -1598,12 +1617,6 @@
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports) {
-
-module.exports = require("Document");
-
-/***/ }),
-/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function () {
@@ -1699,6 +1712,7 @@ module.exports = require("Document");
 				var handlerFlag = (i === 0);
 				parser.watcher.updateIndex($access, options, function (opts) {
 					var cFor = forsCache[opts.newVal] = forsCache[opts.oldVal];
+					if(__filter) cFor.filter = __filter;
 					cFor['$index'] = opts.newVal;
 					parser.watcher.change(opts);
 				}, handlerFlag);
@@ -1752,7 +1766,7 @@ module.exports = require("Document");
 
 				if (isOnce) $node.off(evt, Parser._proxy);
 
-				$node.on(evt, Parser._proxy);
+				$node.__on__(evt, Parser._proxy);
 			});
 		},
 		'vone': function ($node, fors, expression, dir) {
@@ -1982,9 +1996,7 @@ module.exports = require("Document");
 			}, fors);
 
 			Parser.bindChangeEvent($node, function () {
-				if (isChecked === $node.is(':checked')) return;
-				isChecked = $node.is(':checked');
-				duplex[field] = $node.val();
+				if($node.is(':checked')) duplex[field] = $node.val();
 			});
 		},
 		'vmcheckbox': function ($node, fors, expression, dir) {
@@ -2375,6 +2387,15 @@ module.exports = require("Document");
 	};
 
 	/**
+	 * 销毁
+	 */
+	pp.destroy = function($element){
+		$element.__remove_on__();
+		this.watcher.destroy();
+		this.$scope = this.watcher = this.updater = null;
+	}
+
+	/**
 	 * 添加指令规则
 	 * @param   {Object|String}     directive       [当只有一个参数是代表是指令规则键值对，两个参数的时候代表指令名]
 	 * @param   {Function}          func            [指令解析函数]
@@ -2669,27 +2690,27 @@ module.exports = require("Document");
 
 		// 解决中文输入时 input 事件在未选择词组时的触发问题
 		// https://developer.mozilla.org/zh-CN/docs/Web/Events/compositionstart
-		$node.on('compositionstart', function () {
+		$node.__on__('compositionstart', function () {
 			composeLock = true;
 		});
-		$node.on('compositionend', function () {
+		$node.__on__('compositionend', function () {
 			composeLock = false;
 		});
 
 		// input 事件(实时触发)
-		$node.on('input', function () {
+		$node.__on__('input', function () {
 			callbacl.apply(this, arguments);
 		});
 
 		// change 事件(失去焦点触发)
-		$node.on('blur', function () {
+		$node.__on__('blur', function () {
 			callbacl.apply(this, arguments);
 		});
 	};
 
 	//通用change事件监听处理。比如：radio、checkbox、select等
 	Parser.bindChangeEvent = function ($node, callback) {
-		$node.on('change', function () {
+		$node.__on__('change', function () {
 			callback.apply(this, arguments);
 		});
 	};
@@ -2767,10 +2788,49 @@ module.exports = require("Document");
 })();
 
 /***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = require("Document");
+
+/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(0);
+(function (factory) {
+    const avm = factory();
+    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
+        module.exports = JQLite;
+    }
+    
+    const modName = window.__AGILE_VM_ID__ || 'avm';
+
+    if (typeof window.define === "function" && window.define.amd) {
+        window.define(modName, [], function () {
+            return avm;
+        });
+    }
+
+    if(!window[modName]) window[modName] = avm;
+
+})(function(){
+    return {
+        JQLite: __webpack_require__(0),
+        $: __webpack_require__(0),
+        Parser: __webpack_require__(1)
+    };
+})
+
+
+	/*window.JQLite = jqlite;
+
+	if(!window.$){
+		window.$ = jqlite;
+	}
+	if(!window.jQuery){
+		window.jQuery = jqlite;
+	}*/
+
 
 /***/ }),
 /* 4 */
@@ -2839,6 +2899,15 @@ module.exports = require("File");
 
 
 	/**
+	 * 销毁mvvm对象
+	 */
+	mp.destroy = function(){
+		this.vm.destroy();
+		this.backup = this.vm = this.$data = null;
+	}
+
+
+	/**
 	 * 重置数据模型至初始状态
 	 * @param   {Array|String}  key  [数据模型字段，或字段数组，空则重置所有]
 	 */
@@ -2874,7 +2943,7 @@ module.exports = require("File");
 
 (function(){
 	var $ = __webpack_require__(0);
-	var Parser = __webpack_require__(2);
+	var Parser = __webpack_require__(1);
 
 	var BRACE2RE = /\{\{([^\}]*)\}\}/;
 	var SPLITRE = /[\:\#\$\*\.]/;
@@ -3110,6 +3179,14 @@ module.exports = require("File");
 		vtext.call(vtext, $node, fors, text, 'v-text');
 	};
 
+	/**
+	 * 销毁
+	 */
+	cp.destroy = function(){
+		this.parser.destroy(this.$element);
+		this.parser = this.$data = null;
+	}
+
 	module.exports = Compiler;
 })();
 
@@ -3146,7 +3223,7 @@ module.exports = require("File");
 				this.listeners[index] = function () {
 					callback.apply(context || this, arguments);
 				};
-				$node.on(evt, this.listeners[index]);
+				$node.__on__(evt, this.listeners[index]);
 			},
 			remove : function ($node, evt, callback) {
 				var _this = this;
@@ -3720,6 +3797,15 @@ module.exports = require("File");
 
 	};
 
+	/**
+	 * 销毁
+	 */
+	wp.destroy = function(){
+		this.observer.destroy();
+		this.$depSub = {};
+		this.parser = this.observer = null;
+	}
+
 	
 	module.exports = Watcher;
 })();
@@ -3952,6 +4038,11 @@ module.exports = require("File");
 			});
 	};
 
+	// 销毁
+	op.destroy = function(){
+		this.$subs = {};
+	};
+
 	module.exports = Observer;
 })();
 
@@ -3983,7 +4074,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 			if(typeof document!='undefined'&&document.getElementById){
 				return document.getElementById(id);
 			}else{
-				return __webpack_require__(1).getElement(id);
+				return __webpack_require__(2).getElement(id);
 			}
 		},
 		cache : {//内置函数和自定义函数调用全部存放于_helper.cache里

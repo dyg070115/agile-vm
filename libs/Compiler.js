@@ -236,5 +236,13 @@
 		vtext.call(vtext, $node, fors, text, 'v-text');
 	};
 
+	/**
+	 * 销毁
+	 */
+	cp.destroy = function(){
+		this.parser.destroy(this.$element);
+		this.parser = this.$data = null;
+	}
+
 	module.exports = Compiler;
 })();

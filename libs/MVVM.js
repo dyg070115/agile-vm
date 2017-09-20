@@ -25,6 +25,15 @@
 
 
 	/**
+	 * 销毁mvvm对象
+	 */
+	mp.destroy = function(){
+		this.vm.destroy();
+		this.backup = this.vm = this.$data = null;
+	}
+
+
+	/**
 	 * 重置数据模型至初始状态
 	 * @param   {Array|String}  key  [数据模型字段，或字段数组，空则重置所有]
 	 */
