@@ -1,9 +1,39 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	1.0.1500949773051 beta
+ *	Version	:	0.1.3.1505961037871 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
- *//******/ (function(modules) { // webpackBootstrap
+ */var __AVM__ = {};
+var __EXPORTS_DEFINED_FACTORY__ = function() {
+
+    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
+        module.exports = __AVM__;
+    }
+
+    if (typeof window === 'undefined') return;
+
+    const modName = window.__AGILE_VM_ID__ || 'avm';
+
+    if (typeof window.define === "function" && window.define.amd) {
+        window.define(modName, [], function () {
+            return __AVM__;
+        });
+    }
+
+    if (!window[modName]) window[modName] = __AVM__;
+
+};
+var __EXPORTS_DEFINED__ = function (mod, modName) {
+    if(modName==='JQLite'){
+         for(var k in __AVM__){
+            mod[k] = __AVM__[k];
+         }
+         __AVM__ = mod;
+         __EXPORTS_DEFINED_FACTORY__();
+    }else{
+        __AVM__[modName] = mod;
+    }
+};/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -142,7 +172,9 @@
 		},
 		render: function (data) {
 			if(this.length!==1) return null;
-			return jqlite.vm(this, data);
+			var el = this[0], vm = el.vm;
+			if(!data)  return vm;
+			return el.vm = jqlite.vm(this, data);
 		},
 		def : function(name, val){
 			if(arguments.length===1){
@@ -153,6 +185,25 @@
 				});
 			}
 			return this;
+		},
+		__on__: function (evt, selector, callback) {
+			this.each(function () {
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				if (avmEvents.indexOf(evt) > -1) return;
+				avmEvents.push(evt);
+				$node.attr('avme', '1');
+				jqlite.util.defRec(this, '__avm-events__', avmEvents);
+			});
+			this.on.apply(this, arguments);
+		},
+		__remove_on__: function(){
+			$(this).find('[avme="1"]').each(function(){
+				var $node = $(this), avmEvents = this['__avm-events__'] || [];
+				jqlite.util.defRec(this, '__avm-events__', null);
+				jqlite.util.each(avmEvents, function(i, evt){
+					$node.off(evt);
+				});
+			});
 		}
 	});
 
@@ -385,6 +436,8 @@
 		window.jQuery = jqlite;
 	}
 
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(jqlite, 'JQLite');
+
 	var _template = __webpack_require__(10);
 	jqlite.template = _template;
 	
@@ -487,6 +540,7 @@
 				var handlerFlag = (i === 0);
 				parser.watcher.updateIndex($access, options, function (opts) {
 					var cFor = forsCache[opts.newVal] = forsCache[opts.oldVal];
+					if(__filter) cFor.filter = __filter;
 					cFor['$index'] = opts.newVal;
 					parser.watcher.change(opts);
 				}, handlerFlag);
@@ -540,7 +594,7 @@
 
 				if (isOnce) $node.off(evt, Parser._proxy);
 
-				$node.on(evt, Parser._proxy);
+				$node.__on__(evt, Parser._proxy);
 			});
 		},
 		'vone': function ($node, fors, expression, dir) {
@@ -770,9 +824,7 @@
 			}, fors);
 
 			Parser.bindChangeEvent($node, function () {
-				if (isChecked === $node.is(':checked')) return;
-				isChecked = $node.is(':checked');
-				duplex[field] = $node.val();
+				if($node.is(':checked')) duplex[field] = $node.val();
 			});
 		},
 		'vmcheckbox': function ($node, fors, expression, dir) {
@@ -1137,7 +1189,7 @@
 		var func = new Function('scope', 'return scope.' + Parser.formateSubscript($access) + '[' + $index + '];');
 		scope[str$alias][alias] = func(scope);
 		if (!isParent) scope[str$alias]['$index'] = $index;
-		if (fors.filter && scope[str$alias][alias]['$index'] !== $index) {
+		if (fors.filter) {
 			var filter$access = Parser.makePath(fors.filter, fors);
 			var filter$func = new Function('scope', '$index', 'cur$item', 'var ret =  scope.' + Parser.formateSubscript(filter$access) + '; if(typeof ret==="function"){ return ret($index, cur$item);}else{ return ret; }');
 			
@@ -1145,6 +1197,7 @@
 
 			filter$func(scope, $index, scope[str$alias][alias]);
 
+			delete fors.filter;
 			
 			/*var $filter = $.util.copy(scope[str$alias][alias]);
 			$filter['$index'] = $index;
@@ -1160,6 +1213,15 @@
 	pp.getScope = function () {
 		return Object.create(this.vm.$data);
 	};
+
+	/**
+	 * 销毁
+	 */
+	pp.destroy = function($element){
+		$element.__remove_on__();
+		this.watcher.destroy();
+		this.$scope = this.watcher = this.updater = null;
+	}
 
 	/**
 	 * 添加指令规则
@@ -1456,27 +1518,27 @@
 
 		// 解决中文输入时 input 事件在未选择词组时的触发问题
 		// https://developer.mozilla.org/zh-CN/docs/Web/Events/compositionstart
-		$node.on('compositionstart', function () {
+		$node.__on__('compositionstart', function () {
 			composeLock = true;
 		});
-		$node.on('compositionend', function () {
+		$node.__on__('compositionend', function () {
 			composeLock = false;
 		});
 
 		// input 事件(实时触发)
-		$node.on('input', function () {
+		$node.__on__('input', function () {
 			callbacl.apply(this, arguments);
 		});
 
 		// change 事件(失去焦点触发)
-		$node.on('blur', function () {
+		$node.__on__('blur', function () {
 			callbacl.apply(this, arguments);
 		});
 	};
 
 	//通用change事件监听处理。比如：radio、checkbox、select等
 	Parser.bindChangeEvent = function ($node, callback) {
-		$node.on('change', function () {
+		$node.__on__('change', function () {
 			callback.apply(this, arguments);
 		});
 	};
@@ -1551,13 +1613,16 @@
 
 
 	module.exports = Parser;
+
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(Parser, 'Parser');
+
 })();
 
 /***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(0);
+__webpack_require__(0);
 
 /***/ }),
 /* 3 */
@@ -1607,6 +1672,15 @@ module.exports = __webpack_amd_options__;
 	}
 
 	var mp = MVVM.prototype;
+
+
+	/**
+	 * 销毁mvvm对象
+	 */
+	mp.destroy = function(){
+		this.vm.destroy();
+		this.backup = this.vm = this.$data = null;
+	}
 
 
 	/**
@@ -1881,6 +1955,14 @@ module.exports = __webpack_amd_options__;
 		vtext.call(vtext, $node, fors, text, 'v-text');
 	};
 
+	/**
+	 * 销毁
+	 */
+	cp.destroy = function(){
+		this.parser.destroy(this.$element);
+		this.parser = this.$data = null;
+	}
+
 	module.exports = Compiler;
 })();
 
@@ -1917,7 +1999,7 @@ module.exports = __webpack_amd_options__;
 				this.listeners[index] = function () {
 					callback.apply(context || this, arguments);
 				};
-				$node.on(evt, this.listeners[index]);
+				$node.__on__(evt, this.listeners[index]);
 			},
 			remove : function ($node, evt, callback) {
 				var _this = this;
@@ -2459,7 +2541,7 @@ module.exports = __webpack_amd_options__;
 			var pos = start + rank;
 			gap = args.length - rank;
 
-			for(var i=len-1;i>pos-1;i--){
+			for(var i=pos;i<len;i++){
 				
 				var ni = i+gap;
 					oPath = $access+'.'+i,
@@ -2491,6 +2573,15 @@ module.exports = __webpack_amd_options__;
 
 	};
 
+	/**
+	 * 销毁
+	 */
+	wp.destroy = function(){
+		this.observer.destroy();
+		this.$depSub = {};
+		this.parser = this.observer = null;
+	}
+
 	
 	module.exports = Watcher;
 })();
@@ -2500,33 +2591,33 @@ module.exports = __webpack_amd_options__;
 /***/ (function(module, exports, __webpack_require__) {
 
 
-(function(){
-	
+(function () {
+
 	var $ = __webpack_require__(0);
 
 	//v8引擎sort算法与浏览器不同，重写sort函数，以xSort代替
-	Array.prototype.xSort = function(fn){ 
-	    var fn = fn || function(a, b){  return a > b; }; 
-	    for(var i=0; i<this.length; i++){ 
-	        for(var j=i; j<this.length; j++){ 
-	            if(fn(this[i], this[j])){ 
-	                var t = this[i]; 
-	                this[i] = this[j]; 
-	                this[j] = t; 
-	            } 
-	        } 
-	    }
-	    return this; 
+	Array.prototype.xSort = function (fn) {
+		var fn = fn || function (a, b) { return a > b; };
+		for (var i = 0; i < this.length; i++) {
+			for (var j = i; j < this.length; j++) {
+				if (fn(this[i], this[j])) {
+					var t = this[i];
+					this[i] = this[j];
+					this[j] = t;
+				}
+			}
+		}
+		return this;
 	};
 	// 重写push算法，使用索引值添加，提高效率
-	Array.prototype.xPush = function(){
-	    var l = this.length;
-		for(var i=0, len = arguments.length ; i<len ; i++){
-			this[l+i] = arguments[i];
+	Array.prototype.xPush = function () {
+		var l = this.length;
+		for (var i = 0, len = arguments.length; i < len; i++) {
+			this[l + i] = arguments[i];
 		}
-	    return this; 
+		return this;
 	};
-	
+
 	// 重写的数组操作方法
 	var rewriteArrayMethods = [
 		'pop',
@@ -2540,8 +2631,8 @@ module.exports = __webpack_amd_options__;
 		'xPush'
 	];
 
-	var observeUtil  = {
-		isNeed : function(val){
+	var observeUtil = {
+		isNeed: function (val) {
 			return $.isArray(val) || $.util.isObject(val);
 		}
 	};
@@ -2551,7 +2642,7 @@ module.exports = __webpack_amd_options__;
 	 * @param  {Object}     object    [VM 数据模型]
 	 * @param  {Watcher}    watcher   [Watcher实例对象]
 	 */
-	function Observer (object, watcher) {
+	function Observer(object, watcher) {
 
 		this.watcher = watcher;
 
@@ -2567,7 +2658,7 @@ module.exports = __webpack_amd_options__;
 	 * 监测数据变化触发回调
 	 * @param   {Object}  options  [操作选项]
 	 */
-	op.trigger = function(options){
+	op.trigger = function (options) {
 		this.watcher.change(options);
 	};
 
@@ -2582,12 +2673,12 @@ module.exports = __webpack_amd_options__;
 		}
 
 		$.util.each(object, function (property, value) {
-			var ps = $.util.copyArray(paths||[]);
+			var ps = $.util.copyArray(paths || []);
 			ps.push(property);
 
 			this.observeObject(object, ps, value);
 
-			if(observeUtil.isNeed(value)){
+			if (observeUtil.isNeed(value)) {
 				this.observe(value, ps);
 			}
 
@@ -2604,17 +2695,17 @@ module.exports = __webpack_amd_options__;
 	 * @param   {Any}           val     [默认值]
 	 */
 	op.observeObject = function (object, paths, val) {
-		var path = (paths||[]).join('.');
+		var path = (paths || []).join('.');
 		var prop = paths[paths.length - 1];
 		var descriptor = Object.getOwnPropertyDescriptor(object, prop);
 		var getter = descriptor.get, setter = descriptor.set, ob = this;
 
 		// 定义 object[prop] 的 getter 和 setter
 		Object.defineProperty(object, prop, {
-			get: function Getter () {
+			get: function Getter() {
 				return getter ? getter.call(object) : val;
 			},
-			set: function Setter (newValue) {
+			set: function Setter(newValue) {
 				var oldValue = getter ? getter.call(object) : val;
 
 				if (newValue === oldValue) {
@@ -2634,15 +2725,68 @@ module.exports = __webpack_amd_options__;
 
 				// 触发变更回调
 				ob.trigger({
-					path : path,
-					oldVal : oldValue,
-					newVal : newValue
+					path: path,
+					oldVal: oldValue,
+					newVal: newValue
 				});
 
 			}
 		});
 
 	};
+
+	/**
+	 * 重写数组方法的回调处理
+	 * 由于有的数组可能被同时render到不同的视图中，这时候需要区分当前触发的是哪个视图
+	 * @param   {Array}     array  [目标数组]
+	 * @param   {Number}    index  [observ对象的索引]
+	 * @param   {Funciton}  cb     [当前数组的回调函数]
+	 */
+	var rewriteArrayMethodsCallback = (function () {
+
+		var AP = Array.prototype;
+
+		return function (array, index, cb) {
+
+			var arrayMethods = Object.create(AP);
+
+			var arrProto = array.__proto__;
+
+			var arrCbs = arrProto.cbs || {};
+
+			arrCbs[index] = cb;
+			// 遍历指定的数组函数名
+			$.util.each(rewriteArrayMethods, function (i, method) {
+				var nativeMethod = AP[method];
+				// 对数组函数进行重写
+				$.util.defRec(arrayMethods, method, function _redefineArrayMethod() {
+
+					var args = $.util.copyArray(arguments),
+						oldLen = this.length,
+						result = nativeMethod.apply(this, arguments),
+						newLen = this.length,
+						newArray = this;
+					$.util.each(array.__proto__.cbs, function (index, cb) {
+						cb({
+							method: method,
+							args: args,
+							oldLen: oldLen,
+							newLen: newLen,
+							newArray: newArray
+						});
+					});
+					return result;
+				});
+			});
+
+			arrayMethods.cbs = arrCbs;
+
+			array.__proto__ = arrayMethods;
+		};
+	})();
+
+	// 给当前observe设置索引
+	var OBSERVE_INDEX = 1;
 
 
 	/**
@@ -2651,40 +2795,30 @@ module.exports = __webpack_amd_options__;
 	 * @param   {Array}  paths  [访问路径数组]
 	 */
 	op.observeArray = function (array, paths) {
-		var AP = Array.prototype;
-		var arrayMethods = Object.create(AP);
-		var path = (paths||[]).join('.');
 
-		$.util.each(rewriteArrayMethods, function (i, method) {
+		var path = (paths || []).join('.'), _this = this;
 
-			var ob = this, nativeMethod = AP[method];
-			$.util.defRec(arrayMethods, method, function _redefineArrayMethod () {
+		if (!this.observeIndex) {
+			this.observeIndex = OBSERVE_INDEX++;
+		}
 
-				var args = $.util.copyArray(arguments),
-					oldLen = this.length,
-					result = nativeMethod.apply(this, arguments),
-					newLen = this.length;
-
+		rewriteArrayMethodsCallback(array, this.observeIndex,
+			function (item) {
 				// 重新监测
-				ob.observe(this, paths);
+				_this.observe(item.newArray, paths);
+
+				item.path = path;
 
 				// 触发回调
-				ob.trigger({
-					path : path,
-					method : method,
-					args : args,
-					oldLen : oldLen,
-					newLen : newLen,
-					newArray : this
-				});
-
-				return result;
+				_this.trigger(item);
 			});
-		}, this);
-
-		array.__proto__ = arrayMethods;
 	};
-	
+
+	// 销毁
+	op.destroy = function(){
+		this.$subs = {};
+	};
+
 	module.exports = Observer;
 })();
 
@@ -2694,7 +2828,7 @@ module.exports = __webpack_amd_options__;
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*
 *	Template JS模板引擎
-*	Version	:	1.0.0 beta
+*	Version	:	1.0.1 beta
 *	Author	:	nandy007
 *   License MIT @ https://github.com/nandy007/agile-template
 */
@@ -2713,11 +2847,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 	//工具类
 	var _helper = {
 		getDom : function(id){
-			if(typeof document!='undefined'&&document.getElementById){
-				return document.getElementById(id);
-			}else{
-				return __webpack_require__(11).getElement(id);
-			}
+			return document.getElementById(id);
 		},
 		cache : {//内置函数和自定义函数调用全部存放于_helper.cache里
 			include : function(str, _data){
@@ -2875,6 +3005,9 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 		helper : function(funcName, func){
 			_helper.setCache(funcName, func);
 		},
+		hookHelper: function(funcName, func){
+			_helper[funcName] = func;
+		},
 		/**
 		 * 对template类进行配置设置，可进行设置的配置请参考_config内部对象
 		 * @method config
@@ -2930,12 +3063,6 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 	}
 
 })();
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports) {
-
-module.exports = require("Document");
 
 /***/ })
 /******/ ]);
