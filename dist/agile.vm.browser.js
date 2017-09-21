@@ -1,9 +1,34 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	0.1.0.1505913565388 beta
+ *	Version	:	0.1.2.1505958100631 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
- *//******/ (function(modules) { // webpackBootstrap
+ */var __AVM__;
+(function (factory) {
+    __AVM__ = factory();
+    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
+        module.exports = __AVM__;
+    }
+
+    if (typeof window === 'undefined') return;
+
+    const modName = window.__AGILE_VM_ID__ || 'avm';
+
+    if (typeof window.define === "function" && window.define.amd) {
+        window.define(modName, [], function () {
+            return __AVM__;
+        });
+    }
+
+    if (!window[modName]) window[modName] = __AVM__;
+
+})(function () {
+    return {};
+});
+var __EXPORTS_DEFINED__ = function (mod, modName) {
+    __AVM__[modName] = mod;
+    if(modName==='JQLite') __AVM__['$'] = mod;
+};/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -405,6 +430,8 @@
 	if(!window.jQuery){
 		window.jQuery = jqlite;
 	}
+
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(jqlite, 'JQLite');
 
 	var _template = __webpack_require__(10);
 	jqlite.template = _template;
@@ -1581,46 +1608,16 @@
 
 
 	module.exports = Parser;
+
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(Parser, 'Parser');
+
 })();
 
 /***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-(function (factory) {
-    const avm = factory();
-    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
-        module.exports = JQLite;
-    }
-    
-    const modName = window.__AGILE_VM_ID__ || 'avm';
-
-    if (typeof window.define === "function" && window.define.amd) {
-        window.define(modName, [], function () {
-            return avm;
-        });
-    }
-
-    if(!window[modName]) window[modName] = avm;
-
-})(function(){
-    return {
-        JQLite: __webpack_require__(0),
-        $: __webpack_require__(0),
-        Parser: __webpack_require__(1)
-    };
-})
-
-
-	/*window.JQLite = jqlite;
-
-	if(!window.$){
-		window.$ = jqlite;
-	}
-	if(!window.jQuery){
-		window.jQuery = jqlite;
-	}*/
-
+__webpack_require__(0);
 
 /***/ }),
 /* 3 */
@@ -2826,7 +2823,7 @@ module.exports = __webpack_amd_options__;
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*
 *	Template JS模板引擎
-*	Version	:	1.0.0 beta
+*	Version	:	1.0.1 beta
 *	Author	:	nandy007
 *   License MIT @ https://github.com/nandy007/agile-template
 */
@@ -2845,11 +2842,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 	//工具类
 	var _helper = {
 		getDom : function(id){
-			if(typeof document!='undefined'&&document.getElementById){
-				return document.getElementById(id);
-			}else{
-				return __webpack_require__(11).getElement(id);
-			}
+			return document.getElementById(id);
 		},
 		cache : {//内置函数和自定义函数调用全部存放于_helper.cache里
 			include : function(str, _data){
@@ -3007,6 +3000,9 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 		helper : function(funcName, func){
 			_helper.setCache(funcName, func);
 		},
+		hookHelper: function(funcName, func){
+			_helper[funcName] = func;
+		},
 		/**
 		 * 对template类进行配置设置，可进行设置的配置请参考_config内部对象
 		 * @method config
@@ -3062,12 +3058,6 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 	}
 
 })();
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports) {
-
-module.exports = require("Document");
 
 /***/ })
 /******/ ]);

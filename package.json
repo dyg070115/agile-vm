@@ -1,8 +1,8 @@
 {
   "name": "agile-vm",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "jQuery风格的MVVM框架",
-  "main": "libs/index.js",
+  "main": "index.js",
   "directories": {
     "doc": "docs"
   },

@@ -60,9 +60,10 @@ var plugins = (function(){
                 var file = fs.readFileSync(filePath, encoding);
                 var content = [];
                 content.push(copyright);
-                if(usein==='sprite'){
-                   content.push('var module$this = module;');  
-                }
+
+                var appendContent = fs.readFileSync('./libs/append.js', encoding);
+                content.push(appendContent);  
+                
                 content.push(file);
                 fs.writeFile(filePath, content.join(''), {encoding:encoding}, function(err){
                     err?console.error('写入失败'):console.log('写入成功');
@@ -82,7 +83,7 @@ module.exports = {
     plugins: plugins,
     //页面入口文件配置
     entry: {
-        index : './libs/index.js'
+        index : './libs/main.js'
     },
     //入口文件输出配置
     output: {

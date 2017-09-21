@@ -1,6 +1,6 @@
 /*
 *	Template JS模板引擎
-*	Version	:	1.0.0 beta
+*	Version	:	1.0.1 beta
 *	Author	:	nandy007
 *   License MIT @ https://github.com/nandy007/agile-template
 */
@@ -19,11 +19,7 @@
 	//工具类
 	var _helper = {
 		getDom : function(id){
-			if(typeof document!='undefined'&&document.getElementById){
-				return document.getElementById(id);
-			}else{
-				return require('Document').getElement(id);
-			}
+			return document.getElementById(id);
 		},
 		cache : {//内置函数和自定义函数调用全部存放于_helper.cache里
 			include : function(str, _data){
@@ -180,6 +176,9 @@
 		 */
 		helper : function(funcName, func){
 			_helper.setCache(funcName, func);
+		},
+		hookHelper: function(funcName, func){
+			_helper[funcName] = func;
 		},
 		/**
 		 * 对template类进行配置设置，可进行设置的配置请参考_config内部对象

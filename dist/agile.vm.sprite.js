@@ -1,9 +1,34 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	0.1.0.1505914009264 beta
+ *	Version	:	0.1.2.1505958166424 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
- */var module$this = module;/******/ (function(modules) { // webpackBootstrap
+ */var __AVM__;
+(function (factory) {
+    __AVM__ = factory();
+    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
+        module.exports = __AVM__;
+    }
+
+    if (typeof window === 'undefined') return;
+
+    const modName = window.__AGILE_VM_ID__ || 'avm';
+
+    if (typeof window.define === "function" && window.define.amd) {
+        window.define(modName, [], function () {
+            return __AVM__;
+        });
+    }
+
+    if (!window[modName]) window[modName] = __AVM__;
+
+})(function () {
+    return {};
+});
+var __EXPORTS_DEFINED__ = function (mod, modName) {
+    __AVM__[modName] = mod;
+    if(modName==='JQLite') __AVM__['$'] = mod;
+};/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -75,7 +100,7 @@
 
 (function () {
 
-	var ui = __webpack_require__(4), document = __webpack_require__(2), window = __webpack_require__(5), Adapter = __webpack_require__(6);
+	var ui = __webpack_require__(4), document = __webpack_require__(1), window = __webpack_require__(5), Adapter = __webpack_require__(6);
 	var _util = {
 		setClass: function (el, className) {
 			var context, contextFunc = el['__context'];
@@ -548,11 +573,11 @@
 			});
 			this.on.apply(this, arguments);
 		},
-		__remove_on__: function(){
-			$(this).find('[avme="1"]').each(function(){
+		__remove_on__: function () {
+			$(this).find('[avme="1"]').each(function () {
 				var $node = $(this), avmEvents = this['__avm-events__'] || [];
 				jqlite.util.defRec(this, '__avm-events__', null);
-				jqlite.util.each(avmEvents, function(i, evt){
+				jqlite.util.each(avmEvents, function (i, evt) {
 					$node.off(evt);
 				});
 			});
@@ -1596,18 +1621,21 @@
 	};
 
 	jqlite.vm.addParser = function (rules) {
-		var Parser = __webpack_require__(1);
+		var Parser = __webpack_require__(2);
 		Parser.add(rules);
 	};
 
 
 	module.exports = jqlite;
 
-	if (typeof module$this !== 'undefined') module$this.exports = jqlite;
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(jqlite, 'JQLite');
 
 	var _template = __webpack_require__(15);
 	_template.hooks('get', function (str) {
 		return jqlite.file.read(str);
+	});
+	_template.hookHelper('getDom', function (id) {
+		return __webpack_require__(1).getElement(id);
 	});
 	jqlite.template = _template;
 
@@ -1617,6 +1645,12 @@
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports) {
+
+module.exports = require("Document");
+
+/***/ }),
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function () {
@@ -2785,52 +2819,16 @@
 
 
 	module.exports = Parser;
+
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(Parser, 'Parser');
+
 })();
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
-
-module.exports = require("Document");
 
 /***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-(function (factory) {
-    const avm = factory();
-    if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
-        module.exports = JQLite;
-    }
-    
-    const modName = window.__AGILE_VM_ID__ || 'avm';
-
-    if (typeof window.define === "function" && window.define.amd) {
-        window.define(modName, [], function () {
-            return avm;
-        });
-    }
-
-    if(!window[modName]) window[modName] = avm;
-
-})(function(){
-    return {
-        JQLite: __webpack_require__(0),
-        $: __webpack_require__(0),
-        Parser: __webpack_require__(1)
-    };
-})
-
-
-	/*window.JQLite = jqlite;
-
-	if(!window.$){
-		window.$ = jqlite;
-	}
-	if(!window.jQuery){
-		window.jQuery = jqlite;
-	}*/
-
+__webpack_require__(0);
 
 /***/ }),
 /* 4 */
@@ -2943,7 +2941,7 @@ module.exports = require("File");
 
 (function(){
 	var $ = __webpack_require__(0);
-	var Parser = __webpack_require__(1);
+	var Parser = __webpack_require__(2);
 
 	var BRACE2RE = /\{\{([^\}]*)\}\}/;
 	var SPLITRE = /[\:\#\$\*\.]/;
@@ -4052,7 +4050,7 @@ module.exports = require("File");
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*
 *	Template JS模板引擎
-*	Version	:	1.0.0 beta
+*	Version	:	1.0.1 beta
 *	Author	:	nandy007
 *   License MIT @ https://github.com/nandy007/agile-template
 */
@@ -4071,11 +4069,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 	//工具类
 	var _helper = {
 		getDom : function(id){
-			if(typeof document!='undefined'&&document.getElementById){
-				return document.getElementById(id);
-			}else{
-				return __webpack_require__(2).getElement(id);
-			}
+			return document.getElementById(id);
 		},
 		cache : {//内置函数和自定义函数调用全部存放于_helper.cache里
 			include : function(str, _data){
@@ -4232,6 +4226,9 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 		 */
 		helper : function(funcName, func){
 			_helper.setCache(funcName, func);
+		},
+		hookHelper: function(funcName, func){
+			_helper[funcName] = func;
 		},
 		/**
 		 * 对template类进行配置设置，可进行设置的配置请参考_config内部对象

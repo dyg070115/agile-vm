@@ -474,11 +474,11 @@
 			});
 			this.on.apply(this, arguments);
 		},
-		__remove_on__: function(){
-			$(this).find('[avme="1"]').each(function(){
+		__remove_on__: function () {
+			$(this).find('[avme="1"]').each(function () {
 				var $node = $(this), avmEvents = this['__avm-events__'] || [];
 				jqlite.util.defRec(this, '__avm-events__', null);
-				jqlite.util.each(avmEvents, function(i, evt){
+				jqlite.util.each(avmEvents, function (i, evt) {
 					$node.off(evt);
 				});
 			});
@@ -1529,11 +1529,14 @@
 
 	module.exports = jqlite;
 
-	if (typeof module$this !== 'undefined') module$this.exports = jqlite;
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(jqlite, 'JQLite');
 
 	var _template = require('template');
 	_template.hooks('get', function (str) {
 		return jqlite.file.read(str);
+	});
+	_template.hookHelper('getDom', function (id) {
+		return require('Document').getElement(id);
 	});
 	jqlite.template = _template;
 

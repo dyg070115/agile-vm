@@ -332,6 +332,8 @@
 		window.jQuery = jqlite;
 	}
 
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(jqlite, 'JQLite');
+
 	var _template = require('template');
 	jqlite.template = _template;
 	

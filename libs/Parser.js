@@ -1164,4 +1164,7 @@
 
 
 	module.exports = Parser;
+
+	if (typeof __EXPORTS_DEFINED__ === 'function') __EXPORTS_DEFINED__(Parser, 'Parser');
+
 })();
