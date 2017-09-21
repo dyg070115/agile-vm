@@ -1,6 +1,6 @@
-var __AVM__;
-(function (factory) {
-    __AVM__ = factory();
+var __AVM__ = {};
+var __EXPORTS_DEFINED_FACTORY__ = function() {
+
     if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
         module.exports = __AVM__;
     }
@@ -17,10 +17,15 @@ var __AVM__;
 
     if (!window[modName]) window[modName] = __AVM__;
 
-})(function () {
-    return {};
-});
+};
 var __EXPORTS_DEFINED__ = function (mod, modName) {
-    __AVM__[modName] = mod;
-    if(modName==='JQLite') __AVM__['$'] = mod;
+    if(modName==='JQLite'){
+         for(var k in __AVM__){
+            mod[k] = __AVM__[k];
+         }
+         __AVM__ = mod;
+         __EXPORTS_DEFINED_FACTORY__();
+    }else{
+        __AVM__[modName] = mod;
+    }
 };

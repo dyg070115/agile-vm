@@ -1,11 +1,11 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	0.1.2.1505958100631 beta
+ *	Version	:	0.1.3.1505961037871 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
- */var __AVM__;
-(function (factory) {
-    __AVM__ = factory();
+ */var __AVM__ = {};
+var __EXPORTS_DEFINED_FACTORY__ = function() {
+
     if ((typeof module === "object" || typeof module === "function") && typeof module.exports === "object") {
         module.exports = __AVM__;
     }
@@ -22,12 +22,17 @@
 
     if (!window[modName]) window[modName] = __AVM__;
 
-})(function () {
-    return {};
-});
+};
 var __EXPORTS_DEFINED__ = function (mod, modName) {
-    __AVM__[modName] = mod;
-    if(modName==='JQLite') __AVM__['$'] = mod;
+    if(modName==='JQLite'){
+         for(var k in __AVM__){
+            mod[k] = __AVM__[k];
+         }
+         __AVM__ = mod;
+         __EXPORTS_DEFINED_FACTORY__();
+    }else{
+        __AVM__[modName] = mod;
+    }
 };/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
