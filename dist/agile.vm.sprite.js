@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	0.1.3.1505960977920 beta
+ *	Version	:	0.1.4.1508314178712 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var __AVM__ = {};
@@ -1371,6 +1371,11 @@ var __EXPORTS_DEFINED__ = function (mod, modName) {
 		createJQAdapter: function (el) {
 			return el ? new JQAdapter(el) : new JQAdapter();
 		},
+		createJQPlaceholder: function(){
+			var dom = document.createElement("text", {style:'display:none;'});
+			dom.isPlaceholder = true;
+			return jqlite(dom);
+		},
 		createJQFragment: function () {
 			return new JQFragment();
 		},
@@ -1730,7 +1735,16 @@ module.exports = require("Document");
 			if (isAdapter) {
 				return;
 			} else {
+				var before$placeholder = $.ui.createJQPlaceholder(),
+					after$placeholder = $.ui.createJQPlaceholder();
+				before$placeholder.insertBefore($node);
+				after$placeholder.insertAfter($node);
 				$listFragment.replaceTo($node);
+				
+				$node.def('$placeholder', {
+					before: before$placeholder,
+					after: after$placeholder
+				});
 			}
 
 			var deps = [$access], updater = this.updater;
@@ -1756,7 +1770,7 @@ module.exports = require("Document");
 					parser.watcher.change(opts);
 				}, handlerFlag);
 
-				updater.updateList($parent, options, function (arr) {
+				updater.updateList($parent, $node, options, function (arr) {
 					if (__filter) $node.data('__filter', __filter);
 					var baseIndex = Parser.getBaseIndex(options);
 					var $listFragment = parser.preCompileVFor($node, function () {
@@ -3264,10 +3278,11 @@ module.exports = require("File");
 	/**
 	 * 更新节点vfor数据 realize v-for
 	 * @param   {JQLite}      $parent    [父节点对象]
+	 * @param   {Object}      $node      [vfor指令节点对象]
 	 * @param   {Object}      options    [操作选项]
 	 * @param   {Function}    cb         [回调函数]
 	 */
-	up.updateList = function($parent, options, cb){
+	up.updateList = function($parent, $node, options, cb){
 		var method = options.method;
 		switch(method){
 			case 'xReset' : 
@@ -3340,53 +3355,54 @@ module.exports = require("File");
 		return arr;
 	};
 
-	up.updateListXReset = function($parent, options, cb){
+	up.updateListXReset = function($parent, $node, options, cb){
 		var $fragment = cb(options.args);
-		var children = getVforChildren($parent, options['vforIndex']);
-		if(children.length===0){
-			$fragment.appendTo($parent);
-		}else{
-			$fragment.replaceTo(children[0]);
-			$.util.each(children, function(i, $child){
-				//$parent.remove($child);
-				$child.remove();
-			});
+		var	$placeholder = $node.def('$placeholder') || {},
+			before$placeholder = $placeholder.before;
+			$next = before$placeholder.next();
+		//var children = getVforChildren($parent, options['vforIndex']);
+		while($next && ($next.length===1) && !$next.def('isPlaceholder')){
+			$next.remove();
+			$next = before$placeholder.next();
 		}
+		$fragment.insertAfter(before$placeholder);
 	};
 
-	up.updateListPop = function($parent, options, cb){
-		var $node = getVforLastChild($parent, options['vforIndex']);
-		$node&&$node.remove();
+	up.updateListPop = function($parent, $node, options, cb){
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
+		var $last = after$placeholder.prev();
+		$last&&($last.length===1)&&(!$last.def('isPlaceholder'))&&$last.remove();
 	};
 
-	up.updateListPush = function($parent, options, cb){
+	up.updateListPush = function($parent, $node, options, cb){
 		var $fragment = cb(options.args);
-		var $node = getVforLastChild($parent, options['vforIndex']);
-		if($node&&$node.length>0){
-			$fragment.insertAfter($node);
-		}else{
-			$fragment.appendTo($parent);
-		}
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
+		$fragment.insertBefore(after$placeholder);
 	};
 
-	up.updateListShift = function($parent, options, cb){
-		var $node = getVforFirstChild($parent, options['vforIndex']);
-		$node&&$node.remove();
+	up.updateListShift = function($parent, $node, options, cb){
+		var $placeholder = $node.def('$placeholder') || {},
+			before$placeholder = $placeholder.before;
+		var $first = before$placeholder.next();
+		$first&&($first.length===1)&&(!$first.def('isPlaceholder'))&&$first.remove();
 	};
 
-	up.updateListUnshift = function($parent, options, cb){
+	up.updateListUnshift = function($parent, $node, options, cb){
 		var $fragment = cb(options.args);
-		var $node = getVforFirstChild($parent, options['vforIndex']);
-		if($node&&$node.length>0){
-			$fragment.insertBefore($node);
-		}else{
-			$fragment.appendTo($parent);
-		}	
+		var $placeholder = $node.def('$placeholder') || {},
+			before$placeholder = $placeholder.before;
+		
+		$fragment.insertAfter(before$placeholder);
 	};
 
-	up.updateListSplice = function($parent, options, cb){
+	up.updateListSplice = function($parent, $node, options, cb){
 
 		var children = getVforChildren($parent, options.vforIndex);
+
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
 
 		var args = $.util.copyArray(options.args);
 		var startP = args.shift();
@@ -3399,7 +3415,7 @@ module.exports = require("File");
 				if($child){
 					$fragment.insertBefore($child);
 				}else{
-					$fragment.appendTo($parent);
+					$fragment.insertBefore(after$placeholder);
 				}
 				args = [];
 			};
@@ -3408,8 +3424,10 @@ module.exports = require("File");
 
 	};
 
-	up.updateListCommon = function($parent, options, cb){
+	up.updateListCommon = function($parent, $node, options, cb){
 		var children = getVforChildren($parent, options.vforIndex);
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
 		var args = options.newArray;
 		for(var i=0, len=children.length;i<len;i++){
 			var $child = children[i];
@@ -3418,7 +3436,7 @@ module.exports = require("File");
 				if($child){
 					$fragment.insertBefore($child);
 				}else{
-					$fragment.appendTo($parent);
+					$fragment.insertBefore(after$placeholder);
 				}
 				args = [];
 			};
@@ -3843,6 +3861,11 @@ module.exports = require("File");
 			this[l + i] = arguments[i];
 		}
 		return this;
+	};
+
+	// 增加$set方法修改元素值
+	Array.prototype.$set = function (pos, item) {
+		return this.splice(pos, 1, item);
 	};
 
 	// 重写的数组操作方法

@@ -65,10 +65,11 @@
 	/**
 	 * 更新节点vfor数据 realize v-for
 	 * @param   {JQLite}      $parent    [父节点对象]
+	 * @param   {Object}      $node      [vfor指令节点对象]
 	 * @param   {Object}      options    [操作选项]
 	 * @param   {Function}    cb         [回调函数]
 	 */
-	up.updateList = function($parent, options, cb){
+	up.updateList = function($parent, $node, options, cb){
 		var method = options.method;
 		switch(method){
 			case 'xReset' : 
@@ -141,53 +142,54 @@
 		return arr;
 	};
 
-	up.updateListXReset = function($parent, options, cb){
+	up.updateListXReset = function($parent, $node, options, cb){
 		var $fragment = cb(options.args);
-		var children = getVforChildren($parent, options['vforIndex']);
-		if(children.length===0){
-			$fragment.appendTo($parent);
-		}else{
-			$fragment.replaceTo(children[0]);
-			$.util.each(children, function(i, $child){
-				//$parent.remove($child);
-				$child.remove();
-			});
+		var	$placeholder = $node.def('$placeholder') || {},
+			before$placeholder = $placeholder.before;
+			$next = before$placeholder.next();
+		//var children = getVforChildren($parent, options['vforIndex']);
+		while($next && ($next.length===1) && !$next.def('isPlaceholder')){
+			$next.remove();
+			$next = before$placeholder.next();
 		}
+		$fragment.insertAfter(before$placeholder);
 	};
 
-	up.updateListPop = function($parent, options, cb){
-		var $node = getVforLastChild($parent, options['vforIndex']);
-		$node&&$node.remove();
+	up.updateListPop = function($parent, $node, options, cb){
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
+		var $last = after$placeholder.prev();
+		$last&&($last.length===1)&&(!$last.def('isPlaceholder'))&&$last.remove();
 	};
 
-	up.updateListPush = function($parent, options, cb){
+	up.updateListPush = function($parent, $node, options, cb){
 		var $fragment = cb(options.args);
-		var $node = getVforLastChild($parent, options['vforIndex']);
-		if($node&&$node.length>0){
-			$fragment.insertAfter($node);
-		}else{
-			$fragment.appendTo($parent);
-		}
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
+		$fragment.insertBefore(after$placeholder);
 	};
 
-	up.updateListShift = function($parent, options, cb){
-		var $node = getVforFirstChild($parent, options['vforIndex']);
-		$node&&$node.remove();
+	up.updateListShift = function($parent, $node, options, cb){
+		var $placeholder = $node.def('$placeholder') || {},
+			before$placeholder = $placeholder.before;
+		var $first = before$placeholder.next();
+		$first&&($first.length===1)&&(!$first.def('isPlaceholder'))&&$first.remove();
 	};
 
-	up.updateListUnshift = function($parent, options, cb){
+	up.updateListUnshift = function($parent, $node, options, cb){
 		var $fragment = cb(options.args);
-		var $node = getVforFirstChild($parent, options['vforIndex']);
-		if($node&&$node.length>0){
-			$fragment.insertBefore($node);
-		}else{
-			$fragment.appendTo($parent);
-		}	
+		var $placeholder = $node.def('$placeholder') || {},
+			before$placeholder = $placeholder.before;
+		
+		$fragment.insertAfter(before$placeholder);
 	};
 
-	up.updateListSplice = function($parent, options, cb){
+	up.updateListSplice = function($parent, $node, options, cb){
 
 		var children = getVforChildren($parent, options.vforIndex);
+
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
 
 		var args = $.util.copyArray(options.args);
 		var startP = args.shift();
@@ -200,7 +202,7 @@
 				if($child){
 					$fragment.insertBefore($child);
 				}else{
-					$fragment.appendTo($parent);
+					$fragment.insertBefore(after$placeholder);
 				}
 				args = [];
 			};
@@ -209,8 +211,10 @@
 
 	};
 
-	up.updateListCommon = function($parent, options, cb){
+	up.updateListCommon = function($parent, $node, options, cb){
 		var children = getVforChildren($parent, options.vforIndex);
+		var $placeholder = $node.def('$placeholder') || {},
+			after$placeholder = $placeholder.after;
 		var args = options.newArray;
 		for(var i=0, len=children.length;i<len;i++){
 			var $child = children[i];
@@ -219,7 +223,7 @@
 				if($child){
 					$fragment.insertBefore($child);
 				}else{
-					$fragment.appendTo($parent);
+					$fragment.insertBefore(after$placeholder);
 				}
 				args = [];
 			};

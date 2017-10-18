@@ -270,6 +270,11 @@
 		isJQAdapter : function(){
 			return false;
 		},
+		createJQPlaceholder: function(){
+			var dom = document.createComment(' ');
+			dom.isPlaceholder = true;
+			return jqlite(dom);
+		},
 		createJQFragment : function(){
 			return new JQFragment();
 		},

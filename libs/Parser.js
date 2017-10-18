@@ -70,7 +70,16 @@
 			if (isAdapter) {
 				return;
 			} else {
+				var before$placeholder = $.ui.createJQPlaceholder(),
+					after$placeholder = $.ui.createJQPlaceholder();
+				before$placeholder.insertBefore($node);
+				after$placeholder.insertAfter($node);
 				$listFragment.replaceTo($node);
+				
+				$node.def('$placeholder', {
+					before: before$placeholder,
+					after: after$placeholder
+				});
 			}
 
 			var deps = [$access], updater = this.updater;
@@ -96,7 +105,7 @@
 					parser.watcher.change(opts);
 				}, handlerFlag);
 
-				updater.updateList($parent, options, function (arr) {
+				updater.updateList($parent, $node, options, function (arr) {
 					if (__filter) $node.data('__filter', __filter);
 					var baseIndex = Parser.getBaseIndex(options);
 					var $listFragment = parser.preCompileVFor($node, function () {

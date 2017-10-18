@@ -1267,6 +1267,11 @@
 		createJQAdapter: function (el) {
 			return el ? new JQAdapter(el) : new JQAdapter();
 		},
+		createJQPlaceholder: function(){
+			var dom = document.createElement("text", {style:'display:none;'});
+			dom.isPlaceholder = true;
+			return jqlite(dom);
+		},
 		createJQFragment: function () {
 			return new JQFragment();
 		},

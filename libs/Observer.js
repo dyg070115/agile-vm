@@ -26,6 +26,11 @@
 		return this;
 	};
 
+	// 增加$set方法修改元素值
+	Array.prototype.$set = function (pos, item) {
+		return this.splice(pos, 1, item);
+	};
+
 	// 重写的数组操作方法
 	var rewriteArrayMethods = [
 		'pop',
