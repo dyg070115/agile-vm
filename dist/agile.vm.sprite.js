@@ -1,6 +1,6 @@
 /*
  *	Agile VM 移动前端MVVM框架
- *	Version	:	0.1.4.1508314178712 beta
+ *	Version	:	0.1.5.1509008478581 beta
  *	Author	:	nandy007
  *	License MIT @ https://github.com/nandy007/agile-vm
  */var __AVM__ = {};
@@ -15,7 +15,8 @@ var __EXPORTS_DEFINED_FACTORY__ = function() {
     const modName = window.__AGILE_VM_ID__ || 'avm';
 
     if (typeof window.define === "function" && window.define.amd) {
-        window.define(modName, [], function () {
+        //window.define(modName, [], function () {
+        window.define([], function () {
             return __AVM__;
         });
     }

@@ -10,7 +10,8 @@ var __EXPORTS_DEFINED_FACTORY__ = function() {
     const modName = window.__AGILE_VM_ID__ || 'avm';
 
     if (typeof window.define === "function" && window.define.amd) {
-        window.define(modName, [], function () {
+        //window.define(modName, [], function () {
+        window.define([], function () {
             return __AVM__;
         });
     }
